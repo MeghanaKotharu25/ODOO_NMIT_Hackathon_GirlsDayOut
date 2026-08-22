@@ -252,7 +252,7 @@ export const attendanceService = {
   // Check out for an employee
   checkOut: async (employeeUuid, checkInIsoTime) => {
     if (!isSupabaseConfigured) throw new Error('Supabase not configured');
-    const today = new Date().toISOString().split('T')[0];
+    const today = attendanceService.getLocalDate();
     const now = new Date();
     const checkOutIso = now.toISOString();
 
@@ -264,13 +264,13 @@ export const attendanceService = {
 
     const { data, error } = await supabase
       .from('attendance')
-      .upsert({
-        employee_id: employeeUuid,
-        date: today,
+      .update({
         check_out: checkOutIso,
         work_hours: workHours,
         status: 'present'
-      }, { onConflict: 'employee_id,date' })
+      })
+      .eq('employee_id', employeeUuid)
+      .eq('date', today)
       .select()
       .single();
 

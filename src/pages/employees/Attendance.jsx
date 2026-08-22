@@ -73,7 +73,7 @@ export default function Attendance() {
     setLoading(true);
     setError('');
     try {
-      await attendanceService.checkOut(user.id);
+      await attendanceService.checkOut(user.id, todayRecord?.check_in);
       await loadAttendanceData();
     } catch (updateError) {
       setError(updateError.message);
