@@ -235,8 +235,33 @@
   font-family: var(--font-mono);
 }
 
+.month-nav-button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+}
+
+.month-nav-button:hover {
+  background: var(--text-primary);
+  color: var(--bg-surface);
+}
+
 .attendance-history-controls span {
   margin-left: auto;
+}
+
+.attendance-metrics {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  margin-left: auto;
+}
+
+.attendance-metrics span {
+  margin-left: 0;
 }
 
 .divider-label {
@@ -325,6 +350,13 @@
   }
 
   .attendance-history-controls span {
+    margin-left: 0;
+  }
+
+  .attendance-metrics {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--spacing-2);
     margin-left: 0;
   }
 }

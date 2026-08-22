@@ -22,6 +22,29 @@ const formatDuration = (checkIn, checkOut, workHours) => {
 
 const statusClass = (status) => status.replace('_', '').toLowerCase();
 
+const getMonthStats = (records) => ({
+  present: records.filter((record) => record.status === 'present').length,
+  leaves: records.filter((record) => record.status === 'leave').length,
+  working: records.filter((record) => record.status === 'present' || record.status === 'half_day').length,
+});
+
+const formatHours = (record) => {
+  if (typeof record.work_hours === 'number') {
+    const minutes = Math.round(record.work_hours * 60);
+    return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`;
+  }
+  return formatDuration(record.check_in, record.check_out);
+};
+
+const formatExtraHours = (record) => {
+  if (!record.check_in || !record.check_out) return '--';
+  const hours = typeof record.work_hours === 'number'
+    ? record.work_hours
+    : (new Date(record.check_out) - new Date(record.check_in)) / 3600000;
+  const minutes = Math.max(0, Math.round((hours - 8) * 60));
+  return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`;
+};
+
 export default function Attendance() {
   const { user } = useAuth();
   const [todayRecord, setTodayRecord] = useState(null);
@@ -81,6 +104,14 @@ export default function Attendance() {
     setLoading(false);
   };
 
+  const shiftMonth = (amount) => {
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const next = new Date(year, month - 1 + amount, 1);
+    setSelectedMonth(`${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}`);
+  };
+
+  const monthStats = getMonthStats(history);
+
   return (
     <div className="attendance-page">
       <section className="attendance-control-center">
@@ -132,16 +163,23 @@ export default function Attendance() {
       </div>
 
       <div className="attendance-history-controls">
+        <button type="button" className="month-nav-button" title="Previous month" onClick={() => shiftMonth(-1)}>←</button>
         <label className="font-mono" htmlFor="attendance-month">Review month</label>
         <input id="attendance-month" type="month" value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value)} />
-        <span className="font-mono text-muted">Payable days: {attendanceService.calculatePayableDays(history)}</span>
+        <button type="button" className="month-nav-button" title="Next month" onClick={() => shiftMonth(1)}>→</button>
+        <div className="attendance-metrics">
+          <span className="font-mono text-muted">Days present: {monthStats.present}</span>
+          <span className="font-mono text-muted">Leaves: {monthStats.leaves}</span>
+          <span className="font-mono text-muted">Working days: {monthStats.working}</span>
+          <span className="font-mono text-muted">Payable days: {attendanceService.calculatePayableDays(history)}</span>
+        </div>
       </div>
 
       <section className="attendance-history">
         <div className="data-table-wrapper">
           <table className="data-table">
             <thead>
-              <tr><th>Date</th><th>Check in</th><th>Check out</th><th>Status</th><th className="text-right">Duration</th></tr>
+              <tr><th>Date</th><th>Check in</th><th>Check out</th><th>Status</th><th>Work hours</th><th className="text-right">Extra hours</th></tr>
             </thead>
             <tbody>
               {history.length ? history.map((record) => (
@@ -150,10 +188,11 @@ export default function Attendance() {
                   <td className="font-mono">{formatTime(record.check_in)}</td>
                   <td className="font-mono">{formatTime(record.check_out)}</td>
                   <td><span className={`status-badge ${statusClass(record.status)}`}>{record.status.replace('_', '-')}</span></td>
-                  <td className="font-mono text-right">{formatDuration(record.check_in, record.check_out)}</td>
+                  <td className="font-mono">{formatHours(record)}</td>
+                  <td className="font-mono text-right">{formatExtraHours(record)}</td>
                 </tr>
               )) : (
-                <tr><td colSpan="5" className="attendance-empty">No attendance records yet.</td></tr>
+                <tr><td colSpan="6" className="attendance-empty">No attendance records yet.</td></tr>
               )}
             </tbody>
           </table>
