@@ -1,14 +1,15 @@
 # Dayflow HRMS - Product Requirements (Delivered)
 
 ## Overview
-Dayflow is a web-based Human Resources Management System that we successfully transformed from a standard template into a **premium, cinematic "Operating System"** experience.
+Dayflow is a web-based Human Resources Management System that we successfully transformed from a standard template into a **premium, cinematic "Operating System"** experience, now backed by a live cloud database.
 
 ## Completed Technical Architecture
-We have implemented the following architectural features on the `frontend-build` branch:
+We have implemented the following architectural features on the `main` branch:
 
 1. **Authentication Context (`AuthContext.jsx`)**
-   - Simulated session management mimicking a secure JWT flow.
-   - `ProtectedRoute.jsx` component acting as a routing gatekeeper.
+   - Live session management integrated with **Supabase Authentication**.
+   - `ProtectedRoute.jsx` component acting as a routing gatekeeper connected to the Supabase session state.
+   - Row Level Security (RLS) policies enforcing data access at the database layer.
 
 2. **Global Interaction Layer (`ToastContext.jsx`)**
    - A centralized, globally available Toast Engine providing immediate, tactile feedback for user operations (e.g., "Session Terminated", "PDF Generated", "Record Added").
@@ -17,16 +18,16 @@ We have implemented the following architectural features on the `frontend-build`
    - Global SVG film grain overlay.
    - Route transition animations (fade and translate) mapped to component mounting.
    - Boot sequence CRT turn-on effect via CSS Keyframes.
-   - Dynamic, interactive Custom Cursor system replacing default browser pointers.
+   - Dynamic, interactive Custom Cursor system built with `framer-motion` springs.
 
 ## Completed Functional Requirements
 
 ### 1. 🟢 Dashboard (Command Center)
 - Real-time KPI metrics displaying attendance trends.
 - SVG Bar Charts rendering historical check-in data.
-- "Needs Attention" ledger with actionable internal routing links.
-- **NEW**: Live scrolling Monospace Ticker Tape for system status.
-- **NEW**: Glitch-text revealing greeting for authenticated user.
+- "Needs Attention" ledger with actionable internal routing links and staggered entry sequences.
+- Live scrolling Monospace Ticker Tape for system status.
+- Glitch-text revealing greeting for authenticated user.
 
 ### 2. 🟢 Employee Directory
 - Real-time text query filtering (Name & Department).
@@ -47,5 +48,5 @@ We have implemented the following architectural features on the `frontend-build`
 
 ## Non-Functional Requirements (Met)
 - **Aesthetic**: Strictly adhered to a monochromatic, heavily structured typographic layout using CSS Grid and physical borders.
-- **Motion**: Ensured all transitions use our custom `cubic-bezier(0.16, 1, 0.3, 1)` easing for a snappy, physical feel.
-- **Statefulness**: Though backend-less for this hackathon build, every button and form is fully wired to local React state, creating a seamless illusion of a fully operational system.
+- **Motion**: Ensured all transitions use our custom `cubic-bezier(0.16, 1, 0.3, 1)` easing for a snappy, physical feel, powered globally by `framer-motion`.
+- **Statefulness**: Features a fully functioning Backend-as-a-Service integration (Supabase), ensuring data persistence and secure access logic.
