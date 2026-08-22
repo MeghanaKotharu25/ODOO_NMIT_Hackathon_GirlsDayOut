@@ -117,7 +117,7 @@ export function Login() {
 
           <button
             type="submit"
-            className="btn-primary login-btn mt-4 w-full justify-center py-4 flex items-center gap-2"
+            className="btn btn-primary login-btn mt-4 w-full justify-center py-4 flex items-center gap-2"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
@@ -135,7 +135,7 @@ export function Login() {
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
                 type="button"
-                className="btn-secondary"
+                className="btn btn-secondary"
                 style={{ flex: 1, padding: '0.5rem', fontSize: '0.75rem' }}
                 onClick={() => { setEmail('elena.r@dayflow.io'); setPassword('Password123!'); }}
               >
@@ -143,7 +143,7 @@ export function Login() {
               </button>
               <button
                 type="button"
-                className="btn-secondary"
+                className="btn btn-secondary"
                 style={{ flex: 1, padding: '0.5rem', fontSize: '0.75rem' }}
                 onClick={() => { setEmail('sarah.chen@dayflow.io'); setPassword('Password123!'); }}
               >
@@ -198,7 +198,7 @@ export function Login() {
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
                 <button
                   type="button"
-                  className="btn-secondary"
+                  className="btn btn-secondary"
                   style={{ flex: 1, padding: '0.75rem', justifyContent: 'center' }}
                   onClick={() => setIsForgotModalOpen(false)}
                   disabled={isSendingReset}
@@ -207,7 +207,7 @@ export function Login() {
                 </button>
                 <button
                   type="submit"
-                  className="btn-primary"
+                  className="btn btn-primary"
                   style={{ flex: 1, padding: '0.75rem', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                   disabled={isSendingReset}
                 >

@@ -125,7 +125,7 @@ export function Register() {
                 onChange={handleChange}
                 placeholder="Dayflow Inc."
               />
-              <button type="button" className="btn-secondary" style={{ padding: '0 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Upload Logo">
+              <button type="button" className="btn btn-secondary" style={{ padding: '0 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Upload Logo">
                 <UploadCloud size={18} />
               </button>
             </div>
@@ -213,7 +213,7 @@ export function Register() {
           
           <button 
             type="submit" 
-            className="btn-primary login-btn mt-4 w-full justify-center py-4"
+            className="btn btn-primary login-btn mt-4 w-full justify-center py-4"
             disabled={isSubmitting}
           >
             {isSubmitting ? 'REGISTERING...' : 'REGISTER'}

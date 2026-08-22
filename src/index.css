@@ -5,23 +5,23 @@
   --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
   --font-serif: 'Newsreader', Georgia, serif;
   --font-mono: 'Roboto Mono', monospace;
-  
+
   /* Foundation Colors - Strictly monochromatic base */
   --bg-main: #FDFDFD;
   --bg-surface: #FFFFFF;
   --bg-surface-hover: #F7F7F7;
   --bg-subtle: #F0F0F0;
-  
+
   /* Text */
   --text-primary: #111111; /* Almost pure black */
   --text-secondary: #555555;
   --text-muted: #888888;
-  
+
   /* Accent & Status */
   --accent: #000000;
   --accent-hover: #333333;
   --accent-subtle: #F0F0F0;
-  
+
   /* Refined Operational Status Colors */
   --status-success: #1E4620; /* Deep forest green */
   --status-success-bg: #EAF2EA;
@@ -36,13 +36,13 @@
   --border-light: #EBEBEB;
   --border-strong: #D1D1D1;
   --border-heavy: #111111;
-  
+
   /* Layout & Physicality */
   --radius-sm: 0;
   --radius-md: 2px;
   --radius-lg: 4px;
   --radius-full: 9999px;
-  
+
   --spacing-1: 0.25rem;
   --spacing-2: 0.5rem;
   --spacing-3: 0.75rem;
@@ -53,7 +53,7 @@
   --spacing-10: 2.5rem;
   --spacing-12: 3rem;
   --spacing-16: 4rem;
-  
+
   --sidebar-width: 240px;
   --topbar-height: 64px;
 
@@ -96,28 +96,28 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 400;
 }
 
-h1 { 
+h1 {
   font-family: var(--font-serif);
   font-size: 2.5rem;
-  letter-spacing: -0.03em; 
+  letter-spacing: -0.03em;
 }
 
-h2 { 
+h2 {
   font-family: var(--font-serif);
-  font-size: 1.75rem; 
-  letter-spacing: -0.02em; 
+  font-size: 1.75rem;
+  letter-spacing: -0.02em;
 }
 
-h3 { 
+h3 {
   font-family: var(--font-sans);
-  font-size: 1rem; 
+  font-size: 1rem;
   font-weight: 500;
   letter-spacing: -0.01em;
 }
 
-h4 { 
+h4 {
   font-family: var(--font-sans);
-  font-size: 0.875rem; 
+  font-size: 0.875rem;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -369,4 +369,14 @@ body::after {
   60% { clip: rect(23px, 9999px, 67px, 0); }
   80% { clip: rect(104px, 9999px, 23px, 0); }
   100% { clip: rect(45px, 9999px, 78px, 0); }
+}
+
+/* Fix browser autofill background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active{
+    -webkit-box-shadow: 0 0 0 30px var(--bg-surface) inset !important;
+    -webkit-text-fill-color: var(--text-primary) !important;
+    transition: background-color 5000s ease-in-out 0s;
 }

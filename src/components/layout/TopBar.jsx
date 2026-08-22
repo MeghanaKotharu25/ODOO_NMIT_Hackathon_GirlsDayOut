@@ -31,7 +31,6 @@ export function TopBar() {
   }, []);
   
   const mainNav = [
-    { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Employees', path: '/employees', icon: Users },
     { name: 'Attendance', path: isAdmin ? '/admin/attendance' : '/attendance', icon: Clock },
     { name: 'Time Off', path: '/time-off', icon: Calendar },
