@@ -53,8 +53,8 @@ export function Employees() {
       return;
     }
 
-    // Generate custom ID based on formula: OI (Odoo India) + Initial + Initial + Year + Serial
-    const companyName = 'Odoo India';
+    // Generate custom ID based on formula: [Company] + Initial + Initial + Year + Serial
+    const companyName = localStorage.getItem('dayflow_company_name') || 'Odoo India';
     const year = new Date().getFullYear();
     const serial = employeesList.length + 1;
     const newId = generateEmployeeId(companyName, newEmployee.firstName, newEmployee.lastName, year, serial);

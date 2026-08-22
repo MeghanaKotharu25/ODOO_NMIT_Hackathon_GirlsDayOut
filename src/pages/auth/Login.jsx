@@ -86,6 +86,11 @@ export function Login() {
         return;
       }
 
+      // Save company context to local storage for the demo
+      if (companyName) {
+        localStorage.setItem('dayflow_company_name', companyName.trim());
+      }
+
       // If email confirmation is required, notify user
       if (data.session === null) {
         setErrorMessage('Registration successful! Please check your email to confirm your account.');

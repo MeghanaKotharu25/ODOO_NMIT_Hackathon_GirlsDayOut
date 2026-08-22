@@ -221,3 +221,28 @@ CREATE TRIGGER update_payroll_modtime
 CREATE TRIGGER update_salary_components_modtime
     BEFORE UPDATE ON public.salary_components
     FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+-- ==========================================
+-- AUTOMATIC PROFILE CREATION TRIGGER
+-- ==========================================
+-- Automatically creates a profile record when a new user signs up
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.profiles (id, employee_code, first_name, last_name, email, role, status)
+    VALUES (
+        NEW.id,
+        'EMP-' || substr(md5(random()::text), 1, 6), -- Temporary code until updated by Admin
+        COALESCE(NEW.raw_user_meta_data->>'first_name', 'New'),
+        COALESCE(NEW.raw_user_meta_data->>'last_name', 'User'),
+        NEW.email,
+        'employee',
+        'active'
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
