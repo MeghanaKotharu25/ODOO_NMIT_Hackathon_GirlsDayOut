@@ -41,7 +41,6 @@ export default function Attendance() {
           <p className="text-muted">Review and correct the daily attendance register.</p>
         </div>
         <label className="admin-date-picker">
-          <CalendarDays size={18} />
           <span className="font-mono">Review date</span>
           <input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
         </label>
@@ -55,7 +54,6 @@ export default function Attendance() {
             <h2>{selectedDate}</h2>
             <p className="text-muted">{records.length} employees in the register</p>
           </div>
-          <CalendarDays size={20} aria-hidden="true" />
         </div>
         <div className="data-table-wrapper">
           <table className="data-table">
