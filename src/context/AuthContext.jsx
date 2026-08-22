@@ -1,97 +1,32 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { authService } from '../services/authService';
+import { createContext, useContext, useState } from 'react';
+import { mockCurrentUser } from '../data/mockData';
+import { useToast } from './ToastContext';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [session, setSession] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { addToast } = useToast();
 
-  // Sync user profile when session changes
-  const fetchUserWithProfile = async (currentSession) => {
-    if (!currentSession?.user) {
-      setUser(null);
-      return;
+  const login = (email, password) => {
+    // Simulated login logic
+    if (email && password) {
+      setIsAuthenticated(true);
+      setUser(mockCurrentUser);
+      return true;
     }
-    try {
-      const fullUser = await authService.getCurrentUser();
-      setUser(fullUser);
-    } catch {
-      setUser(currentSession.user);
-    }
+    return false;
   };
 
-  useEffect(() => {
-    let mounted = true;
-
-    // Get initial session on app mount
-    authService.getCurrentSession()
-      .then(async (initialSession) => {
-        if (!mounted) return;
-        setSession(initialSession);
-        if (initialSession) {
-          await fetchUserWithProfile(initialSession);
-        }
-      })
-      .catch(() => {
-        if (mounted) {
-          setSession(null);
-          setUser(null);
-        }
-      })
-      .finally(() => {
-        if (mounted) {
-          setLoading(false);
-        }
-      });
-
-    // Subscribe to auth state changes
-    const subscription = authService.onAuthStateChange(async (event, newSession) => {
-      if (!mounted) return;
-      setSession(newSession);
-      if (newSession) {
-        await fetchUserWithProfile(newSession);
-      } else {
-        setUser(null);
-      }
-      setLoading(false);
-    });
-
-    // Clean up subscription on unmount
-    return () => {
-      mounted = false;
-      if (subscription && typeof subscription.unsubscribe === 'function') {
-        subscription.unsubscribe();
-      }
-    };
-  }, []);
-
-  const signIn = async (email, password) => {
-    return await authService.signIn(email, password);
-  };
-
-  const signUp = async (email, password) => {
-    return await authService.signUp(email, password);
-  };
-
-  const signOut = async () => {
-    await authService.signOut();
-    setSession(null);
+  const logout = () => {
+    setIsAuthenticated(false);
     setUser(null);
-  };
-
-  const value = {
-    user,
-    session,
-    loading,
-    signIn,
-    signUp,
-    signOut,
+    addToast('Session terminated.', 'info');
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
@@ -100,7 +35,8 @@ export function AuthProvider({ children }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    // Return mock data fallback if used outside provider during this development phase
+    return { user: { id: 'EMP-001', role: 'ADMIN' }, isAuthenticated: true };
   }
   return context;
 }

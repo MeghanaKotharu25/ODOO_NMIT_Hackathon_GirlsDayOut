@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { AppShell } from './components/layout/AppShell';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 // Pages
 import { Dashboard } from './pages/Dashboard';
@@ -10,18 +11,26 @@ import { EmployeeDetails } from './pages/EmployeeDetails';
 import { Attendance } from './pages/Attendance';
 import { TimeOff } from './pages/TimeOff';
 import { Salary } from './pages/Salary';
+import { Login } from './pages/Login';
+import { LoadingScreen } from './pages/LoadingScreen';
+import { MyProfile } from './pages/MyProfile';
+import { Settings } from './pages/Settings';
 
-// Dummy components for missing routes
-const MyProfile = () => <div className="p-8">My Profile (Placeholder)</div>;
-const Settings = () => <div className="p-8">Settings (Placeholder)</div>;
 const Help = () => <div className="p-8">Help Center (Placeholder)</div>;
 
 function App() {
   return (
-    <AuthProvider>
-      <ToastProvider>
+    <ToastProvider>
+      <AuthProvider>
         <Routes>
-          <Route path="/" element={<AppShell />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/loading" element={<LoadingScreen />} />
+          
+          <Route path="/" element={
+            <ProtectedRoute>
+              <AppShell />
+            </ProtectedRoute>
+          }>
             <Route index element={<Dashboard />} />
             <Route path="employees" element={<Employees />} />
             <Route path="employees/:id" element={<EmployeeDetails />} />
@@ -33,8 +42,8 @@ function App() {
             <Route path="help" element={<Help />} />
           </Route>
         </Routes>
-      </ToastProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </ToastProvider>
   );
 }
 

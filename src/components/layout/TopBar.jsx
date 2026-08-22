@@ -3,12 +3,14 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Bell, Search, LayoutDashboard, Users, Clock, Calendar, HelpCircle, Settings, UserCircle, LogOut } from 'lucide-react';
 import { mockCurrentUser } from '../../data/mockData';
 import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
 import './Layout.css';
 
 export function TopBar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { addToast } = useToast();
+  const { logout } = useAuth();
   
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -142,7 +144,7 @@ export function TopBar() {
                 </button>
                 <button 
                   className="popover-action text-error"
-                  onClick={() => { setShowProfileMenu(false); addToast('Session terminated.', 'error'); }}
+                  onClick={() => { setShowProfileMenu(false); logout(); }}
                 >
                   <LogOut size={14} /> Terminate Session
                 </button>
