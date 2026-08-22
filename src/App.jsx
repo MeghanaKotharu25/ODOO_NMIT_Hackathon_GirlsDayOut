@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { AppShell } from './components/layout/AppShell';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { CustomCursor } from './components/layout/CustomCursor';
 
 // Pages
 import { Dashboard } from './pages/Dashboard';
@@ -22,6 +23,7 @@ function App() {
   return (
     <ToastProvider>
       <AuthProvider>
+        <CustomCursor />
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/loading" element={<LoadingScreen />} />
