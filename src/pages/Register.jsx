@@ -71,7 +71,9 @@ export function Register() {
         role: 'admin'
       };
 
-      const result = await signUp(trimmedEmail, formData.password, metadata);
+      const cleanEmail = trimmedEmail.toLowerCase();
+
+      const result = await signUp(cleanEmail, formData.password, metadata);
 
       if (trimmedCompany) {
         localStorage.setItem('dayflow_company_name', trimmedCompany);

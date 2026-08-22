@@ -36,6 +36,8 @@ export function Login() {
       const msg = err.message || '';
       if (msg.toLowerCase().includes('failed to fetch') || err.name === 'TypeError') {
         addToast(`Network Error: Unable to connect to Supabase (${msg || 'Failed to fetch'}). Check DNS/Internet.`, 'error');
+      } else if (msg.toLowerCase().includes('email not confirmed')) {
+        addToast('Email confirmation is required. Please check your inbox or confirm in Supabase Auth.', 'error');
       } else if (msg.toLowerCase().includes('invalid login credentials')) {
         addToast('Invalid Login ID/Email or password. Please verify.', 'error');
       } else {

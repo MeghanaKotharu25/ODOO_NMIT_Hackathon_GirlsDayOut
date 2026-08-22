@@ -19,6 +19,7 @@ import { LoadingScreen } from './pages/LoadingScreen';
 import { MyProfile } from './pages/MyProfile';
 import { Settings } from './pages/Settings';
 import { Startup } from './pages/Startup';
+import { Payroll } from './pages/Payroll';
 
 const Help = () => <div className="p-8 font-mono">Help Center (Placeholder)</div>;
 
@@ -45,13 +46,14 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Navigate to="/employees" replace />} />
+          <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
-          <Route path="employees" element={<Employees />} />
-          <Route path="employees/:id" element={<EmployeeDetails />} />
+          <Route path="employees" element={<RoleProtectedRoute><Employees /></RoleProtectedRoute>} />
+          <Route path="employees/:id" element={<RoleProtectedRoute><EmployeeDetails /></RoleProtectedRoute>} />
           <Route path="attendance" element={<Attendance />} />
           <Route path="admin/attendance" element={<RoleProtectedRoute><AdminAttendance /></RoleProtectedRoute>} />
           <Route path="time-off" element={<TimeOff />} />
+          <Route path="payroll" element={<RoleProtectedRoute><Payroll /></RoleProtectedRoute>} />
           <Route path="profile" element={<MyProfile />} />
           <Route path="settings" element={<Settings />} />
           <Route path="help" element={<Help />} />

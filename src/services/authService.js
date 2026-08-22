@@ -4,14 +4,75 @@ export const authService = {
   // Sign up a new user with email & password and optional user metadata
   signUp: async (email, password, metadata = {}) => {
     if (!isSupabaseConfigured) throw new Error('Demo mode: Supabase not configured');
+    const cleanEmail = (email || '').trim().toLowerCase();
+
+    // 1. Attempt to provision confirmed HR/Admin account via the backend create-employee function
+    try {
+      const { data: edgeData, error: edgeError } = await supabase.functions.invoke('create-employee', {
+        body: {
+          isRegistration: true,
+          role: 'admin',
+          email: cleanEmail,
+          password: password,
+          firstName: metadata.first_name || 'Admin',
+          lastName: metadata.last_name || 'User',
+          phone: metadata.phone || '',
+          companyName: metadata.company_name || 'Dayflow',
+          department: 'Human Resources',
+          position: 'HR Administrator'
+        }
+      });
+
+      if (!edgeError && edgeData?.success) {
+        // Automatically sign in to establish an immediate valid authenticated session
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password: password,
+        });
+
+        if (!signInError && signInData?.session) {
+          return signInData;
+        }
+
+        return { user: edgeData.user, session: null };
+      }
+      if (edgeError) {
+        console.warn('Edge function HR registration returned error, falling back:', edgeError);
+      }
+    } catch (edgeInvokeErr) {
+      console.warn('Edge function HR registration exception, falling back:', edgeInvokeErr);
+    }
+
+    // 2. Fallback to standard Supabase Auth signUp if Edge Function was not reachable
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: cleanEmail,
       password,
       options: {
         data: metadata,
       },
     });
     if (error) throw error;
+
+    // Ensure profile row exists in public.profiles for this new user
+    if (data?.user) {
+      try {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: data.user.id,
+            email: cleanEmail,
+            first_name: metadata.first_name || 'Admin',
+            last_name: metadata.last_name || '',
+            role: metadata.role || 'admin',
+            phone: metadata.phone || null,
+            status: 'active',
+          }, { onConflict: 'id' });
+        if (profileError) console.warn('Profile upsert warning:', profileError);
+      } catch (pErr) {
+        console.warn('Profile sync exception:', pErr);
+      }
+    }
+
     return data;
   },
 
@@ -19,23 +80,28 @@ export const authService = {
   signIn: async (identifier, password) => {
     if (!isSupabaseConfigured) throw new Error('Demo mode: Supabase not configured');
 
-    let targetEmail = identifier?.trim() || '';
+    const cleanInput = (identifier || '').trim();
+    if (!cleanInput) throw new Error('Email or Login ID is required.');
+
+    let targetEmail = cleanInput;
 
     // If identifier is not an email (e.g. employee code like OIJODO20260001 or EMP-001), resolve email from profiles
-    if (!targetEmail.includes('@')) {
+    if (!cleanInput.includes('@')) {
       try {
         const { data: profile } = await supabase
           .from('profiles')
           .select('email')
-          .ilike('employee_code', targetEmail)
+          .ilike('employee_code', cleanInput)
           .maybeSingle();
 
         if (profile?.email) {
-          targetEmail = profile.email;
+          targetEmail = profile.email.trim().toLowerCase();
         }
       } catch (lookupErr) {
         console.warn('Employee code lookup warning:', lookupErr);
       }
+    } else {
+      targetEmail = cleanInput.toLowerCase();
     }
 
     const { data, error } = await supabase.auth.signInWithPassword({
