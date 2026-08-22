@@ -152,7 +152,14 @@ export function Employees() {
             <motion.div 
               key={emp.id} 
               className="roster-card"
-              onClick={() => navigate(`/employees/${emp.uuid || emp.id}`)}
+              onClick={() => {
+                const empId = emp.uuid || emp.id;
+                if (empId === user?.id || empId === user?.profile?.id) {
+                  navigate('/profile');
+                } else {
+                  navigate(`/employees/${empId}`);
+                }
+              }}
               style={{ cursor: 'pointer' }}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}

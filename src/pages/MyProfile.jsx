@@ -264,11 +264,8 @@ export function MyProfile() {
               <div className="private-info-grid card-box p-6">
                 <div className="flex justify-between items-center mb-6 border-b border-[var(--border-strong)] pb-4">
                   <h3 className="font-serif text-xl">Personal & Bank Details</h3>
-                  <button className="btn-primary" onClick={handleSavePrivateInfo} disabled={saving}>
-                    {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Save
-                  </button>
                 </div>
-                <div className="grid-2-col gap-8">
+                <fieldset disabled className="grid-2-col gap-8 border-none m-0 p-0">
                   <div className="flex flex-col gap-4">
                     <div className="form-group flex justify-between items-center border-b border-[var(--border-light)] pb-2">
                       <label className="text-secondary text-sm">Date of Birth</label>
@@ -336,7 +333,7 @@ export function MyProfile() {
                       <span className="font-mono text-muted">{user.profile?.employee_code || user.id || 'N/A'}</span>
                     </div>
                   </div>
-                </div>
+                </fieldset>
               </div>
             )}
 
@@ -345,12 +342,9 @@ export function MyProfile() {
               <div className="salary-info-grid card-box p-6 font-mono text-sm">
                 <div className="flex justify-between items-center mb-6 border-b border-[var(--border-strong)] pb-4">
                   <h3 className="font-serif text-xl">Salary Config & Components</h3>
-                  <button className="btn-primary" onClick={handleSaveSalaryInfo} disabled={saving}>
-                    {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Save Config
-                  </button>
                 </div>
                 
-                <div className="grid-2-col gap-12">
+                <fieldset disabled className="grid-2-col gap-12 border-none m-0 p-0">
                   <div className="flex flex-col gap-4">
                     <div className="flex justify-between items-center mb-4">
                       <label className="font-sans">Month Wage</label>
@@ -492,7 +486,7 @@ export function MyProfile() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </fieldset>
               </div>
             )}
 
