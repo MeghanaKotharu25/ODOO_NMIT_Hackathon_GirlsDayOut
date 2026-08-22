@@ -1,32 +1,94 @@
-import { createContext, useContext, useState } from 'react';
-import { mockCurrentUser } from '../data/mockData';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { authService } from '../services/authService';
 import { useToast } from './ToastContext';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const { addToast } = useToast();
 
-  const login = (email, password) => {
-    // Simulated login logic
-    if (email && password) {
-      setIsAuthenticated(true);
-      setUser(mockCurrentUser);
-      return true;
+  const fetchUserWithProfile = async (currentSession) => {
+    if (!currentSession?.user) {
+      setUser(null);
+      return;
     }
-    return false;
+    try {
+      const fullUser = await authService.getCurrentUser();
+      setUser(fullUser);
+    } catch {
+      setUser(currentSession.user);
+    }
   };
 
-  const logout = () => {
-    setIsAuthenticated(false);
+  useEffect(() => {
+    let mounted = true;
+
+    authService.getCurrentSession()
+      .then(async (initialSession) => {
+        if (!mounted) return;
+        setSession(initialSession);
+        if (initialSession) {
+          await fetchUserWithProfile(initialSession);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setSession(null);
+          setUser(null);
+        }
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    const subscription = authService.onAuthStateChange(async (event, newSession) => {
+      if (!mounted) return;
+      setSession(newSession);
+      if (newSession) {
+        await fetchUserWithProfile(newSession);
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => {
+      mounted = false;
+      if (subscription && typeof subscription.unsubscribe === 'function') {
+        subscription.unsubscribe();
+      }
+    };
+  }, []);
+
+  const login = async (email, password) => {
+    try {
+      const { error } = await authService.signIn(email, password);
+      if (error) {
+        addToast(`Login failed: ${error.message}`, 'error');
+        return false;
+      }
+      addToast('System authenticated. Welcome back.', 'success');
+      return true;
+    } catch (err) {
+      addToast('System error during authentication.', 'error');
+      return false;
+    }
+  };
+
+  const logout = async () => {
+    await authService.signOut();
+    setSession(null);
     setUser(null);
     addToast('Session terminated.', 'info');
   };
 
+  const isAuthenticated = !!session;
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, session, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
@@ -35,8 +97,8 @@ export function AuthProvider({ children }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    // Return mock data fallback if used outside provider during this development phase
-    return { user: { id: 'EMP-001', role: 'ADMIN' }, isAuthenticated: true };
+    // Fallback for isolated components without provider wrap
+    return { isAuthenticated: false, loading: false };
   }
   return context;
 }
