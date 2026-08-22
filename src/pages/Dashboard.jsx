@@ -58,7 +58,7 @@ export function Dashboard() {
               <span className="stat-label">On Leave</span>
               <span className="stat-trend neutral">Approved</span>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         <motion.div variants={staggerItem} className="attention-ledger">
@@ -107,7 +107,7 @@ export function Dashboard() {
               </Magnetic>
             </motion.li>
           </motion.ul>
-        </div>
+        </motion.div>
       </section>
 
       {/* Integrated Visualization Section */}
