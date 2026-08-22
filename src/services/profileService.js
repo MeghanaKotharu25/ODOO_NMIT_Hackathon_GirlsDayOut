@@ -44,6 +44,37 @@ export const profileService = {
     return data;
   },
 
+  // Update employee private info
+  updatePrivateInfo: async (employeeId, updates) => {
+    if (!isSupabaseConfigured) throw new Error('Supabase not configured');
+    
+    // First check if a record exists
+    const { data: existing } = await supabase
+      .from('employee_private_info')
+      .select('id')
+      .eq('employee_id', employeeId)
+      .maybeSingle();
+
+    if (existing) {
+      const { data, error } = await supabase
+        .from('employee_private_info')
+        .update(updates)
+        .eq('employee_id', employeeId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    } else {
+      const { data, error } = await supabase
+        .from('employee_private_info')
+        .insert({ employee_id: employeeId, ...updates })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    }
+  },
+
   // Get employee resume info
   getResumeInfo: async (employeeId) => {
     if (!isSupabaseConfigured) return null;
@@ -57,6 +88,52 @@ export const profileService = {
       throw error;
     }
     return data;
+  },
+
+  // Get employee salary info
+  getSalaryInfo: async (employeeId) => {
+    if (!isSupabaseConfigured) return null;
+    const { data, error } = await supabase
+      .from('employee_salary_info')
+      .select('*')
+      .eq('employee_id', employeeId)
+      .maybeSingle();
+    if (error) {
+      console.error('profileService.getSalaryInfo error:', error);
+      throw error;
+    }
+    return data;
+  },
+
+  // Update employee salary info
+  updateSalaryInfo: async (employeeId, updates) => {
+    if (!isSupabaseConfigured) throw new Error('Supabase not configured');
+    
+    // Check if exists
+    const { data: existing } = await supabase
+      .from('employee_salary_info')
+      .select('id')
+      .eq('employee_id', employeeId)
+      .maybeSingle();
+
+    if (existing) {
+      const { data, error } = await supabase
+        .from('employee_salary_info')
+        .update(updates)
+        .eq('employee_id', employeeId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    } else {
+      const { data, error } = await supabase
+        .from('employee_salary_info')
+        .insert({ employee_id: employeeId, ...updates })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    }
   },
 
   // Update profile fields

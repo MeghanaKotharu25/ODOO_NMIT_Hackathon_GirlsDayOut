@@ -205,3 +205,15 @@
     overflow-x: auto;
   }
 }
+
+.grid-2-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-8);
+}
+
+@media (max-width: 900px) {
+  .grid-2-col {
+    grid-template-columns: 1fr;
+  }
+}

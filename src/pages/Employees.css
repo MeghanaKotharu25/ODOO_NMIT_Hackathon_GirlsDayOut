@@ -100,13 +100,12 @@
 .roster-card {
   display: flex;
   flex-direction: column;
-  cursor: pointer;
   border: 1px solid transparent;
   padding-bottom: var(--spacing-4);
   transition: border-color 0.3s var(--ease-snappy);
 }
 
-.roster-card:hover {
+.roster-card.is-admin:hover {
   border-bottom-color: var(--border-heavy);
 }
 
@@ -127,7 +126,7 @@
   transition: transform 0.5s var(--ease-fluid), filter 0.5s var(--ease-fluid);
 }
 
-.roster-card:hover .roster-avatar {
+.roster-card.is-admin:hover .roster-avatar {
   transform: scale(1.05);
   filter: grayscale(0%);
 }
@@ -154,7 +153,7 @@
   transition: transform 0.3s var(--ease-snappy);
 }
 
-.roster-card:hover .status-dot {
+.roster-card.is-admin:hover .status-dot {
   transform: scale(1.2);
 }
 
