@@ -40,6 +40,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let mounted = true;
+    let safetyTimeout = null;
 
     // DEMO MODE: If Supabase is not configured, skip auth entirely
     if (!isSupabaseConfigured) {
@@ -49,6 +50,14 @@ export function AuthProvider({ children }) {
       setLoading(false);
       return;
     }
+
+    // Safety timeout: forcefully clear loading state if Supabase hangs (e.g. storage lock issue)
+    safetyTimeout = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn('Auth initialization timed out after 5s. Forcefully clearing loading state.');
+        setLoading(false);
+      }
+    }, 5000);
 
     // Get initial session on app mount
     authService.getCurrentSession()
@@ -67,7 +76,10 @@ export function AuthProvider({ children }) {
         }
       })
       .finally(() => {
-        if (mounted) setLoading(false);
+        if (mounted) {
+          setLoading(false);
+          clearTimeout(safetyTimeout);
+        }
       });
 
     // Subscribe to auth state changes safely
@@ -91,6 +103,7 @@ export function AuthProvider({ children }) {
     // Clean up subscription on unmount
     return () => {
       mounted = false;
+      if (safetyTimeout) clearTimeout(safetyTimeout);
       if (subscription && typeof subscription.unsubscribe === 'function') {
         try {
           subscription.unsubscribe();
