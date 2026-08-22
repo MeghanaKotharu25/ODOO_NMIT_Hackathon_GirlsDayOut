@@ -1,0 +1,69 @@
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: var(--bg-main);
+  padding: var(--spacing-6);
+}
+
+.login-box {
+  width: 100%;
+  max-width: 440px;
+  background-color: var(--bg-surface);
+  border: 2px solid var(--border-heavy);
+  box-shadow: 12px 12px 0px rgba(0,0,0,1);
+  display: flex;
+  flex-direction: column;
+}
+
+.login-header {
+  padding: var(--spacing-8) var(--spacing-8) var(--spacing-6);
+  border-bottom: 2px solid var(--border-heavy);
+  background-color: var(--bg-subtle);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+}
+
+.logo-mark-lg {
+  width: 32px;
+  height: 32px;
+  background-color: var(--text-primary);
+}
+
+.login-brand h1 {
+  font-size: 2.5rem;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.login-form {
+  padding: var(--spacing-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.login-btn {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.85rem;
+}
+
+.login-footer {
+  padding: var(--spacing-4) var(--spacing-8);
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

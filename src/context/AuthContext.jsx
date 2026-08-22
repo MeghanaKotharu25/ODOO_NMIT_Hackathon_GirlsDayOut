@@ -43,9 +43,7 @@ export function AuthProvider({ children }) {
         }
       })
       .finally(() => {
-        if (mounted) {
-          setLoading(false);
-        }
+        if (mounted) setLoading(false);
       });
 
     // Subscribe to auth state changes safely
@@ -63,9 +61,7 @@ export function AuthProvider({ children }) {
       });
     } catch (err) {
       console.warn('Auth state subscription warning:', err);
-      if (mounted) {
-        setLoading(false);
-      }
+      if (mounted) setLoading(false);
     }
 
     // Clean up subscription on unmount
@@ -100,13 +96,27 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Compatibility aliases for frontend components
+  const login = async (email, password) => {
+    return await signIn(email, password);
+  };
+
+  const logout = async () => {
+    await signOut();
+  };
+
+  const isAuthenticated = !!user || !!session;
+
   const value = {
     user,
     session,
     loading,
+    isAuthenticated,
     signIn,
     signUp,
     signOut,
+    login,
+    logout,
   };
 
   return (
@@ -119,7 +129,7 @@ export function AuthProvider({ children }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    return { isAuthenticated: false, loading: false, user: null, session: null };
   }
   return context;
 }

@@ -1,16 +1,21 @@
 import { useState } from 'react';
-import { Calendar as CalendarIcon, CheckCircle2, XCircle, Clock, Plus } from 'lucide-react';
+import { Calendar as CalendarIcon, CheckCircle2, XCircle, Clock, Plus, X } from 'lucide-react';
 import { mockEmployees } from '../data/mockData';
+import { useToast } from '../context/ToastContext';
 import './TimeOff.css';
 
 export function TimeOff() {
   const isAdmin = true; // Hardcoded based on mock user
+  const { addToast } = useToast();
 
-  // Mock pending requests (Admin view)
-  const pendingRequests = [
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [newRequest, setNewRequest] = useState({ type: 'Paid Leave', start: '', end: '', reason: '' });
+
+  // Mock pending requests (Admin view) made stateful
+  const [pendingRequests, setPendingRequests] = useState([
     { id: 1, employee: mockEmployees[1], type: 'Paid Leave', start: 'Oct 28, 2024', end: 'Oct 31, 2024', duration: '4 days', reason: 'Family vacation' },
     { id: 2, employee: mockEmployees[6], type: 'Sick Leave', start: 'Oct 24, 2024', end: 'Oct 25, 2024', duration: '2 days', reason: 'Flu symptoms' },
-  ];
+  ]);
 
   // Mock leave balances (Employee view)
   const leaveBalances = [
@@ -23,6 +28,26 @@ export function TimeOff() {
     return balance.total - balance.used - balance.pending;
   };
 
+  const handleAction = (id, action) => {
+    setPendingRequests(prev => prev.filter(req => req.id !== id));
+    if (action === 'approve') {
+      addToast('Leave request approved successfully.', 'success');
+    } else {
+      addToast('Leave request rejected.', 'error');
+    }
+  };
+
+  const handleRequestSubmit = (e) => {
+    e.preventDefault();
+    if (!newRequest.start || !newRequest.end || !newRequest.reason) {
+      addToast('Please fill out all request details.', 'error');
+      return;
+    }
+    setIsDrawerOpen(false);
+    setNewRequest({ type: 'Paid Leave', start: '', end: '', reason: '' });
+    addToast('Your time off request has been submitted for approval.', 'success');
+  };
+
   return (
     <div className="timeoff-page">
       <header className="page-header">
@@ -31,7 +56,7 @@ export function TimeOff() {
             <h1 className="page-title">Time Off</h1>
             <p className="text-muted">Manage leave balances and requests</p>
           </div>
-          <button className="btn btn-primary">
+          <button className="btn btn-primary" onClick={() => setIsDrawerOpen(true)}>
             <Plus size={16} /> Request Time Off
           </button>
         </div>
@@ -77,10 +102,16 @@ export function TimeOff() {
                       </div>
                       
                       <div className="req-actions">
-                        <button className="btn btn-secondary approve-btn">
+                        <button 
+                          className="btn btn-secondary approve-btn"
+                          onClick={() => handleAction(req.id, 'approve')}
+                        >
                           <CheckCircle2 size={16} /> Approve
                         </button>
-                        <button className="btn btn-secondary reject-btn">
+                        <button 
+                          className="btn btn-secondary reject-btn"
+                          onClick={() => handleAction(req.id, 'reject')}
+                        >
                           <XCircle size={16} /> Reject
                         </button>
                       </div>
@@ -157,6 +188,68 @@ export function TimeOff() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Request Leave Drawer */}
+      <div className={`drawer-overlay ${isDrawerOpen ? 'open' : ''}`} onClick={() => setIsDrawerOpen(false)}></div>
+      <div className={`drawer ${isDrawerOpen ? 'open' : ''}`}>
+        <div className="drawer-header">
+          <h2 className="font-serif text-xl">Request Time Off</h2>
+          <button className="icon-btn" onClick={() => setIsDrawerOpen(false)}>
+            <X size={20} />
+          </button>
+        </div>
+        
+        <form className="drawer-body" onSubmit={handleRequestSubmit}>
+          <div className="form-group">
+            <label className="form-label font-mono uppercase text-xs">Leave Type</label>
+            <select 
+              className="form-input"
+              value={newRequest.type}
+              onChange={(e) => setNewRequest({...newRequest, type: e.target.value})}
+            >
+              <option value="Paid Leave">Paid Leave</option>
+              <option value="Sick Leave">Sick Leave</option>
+              <option value="Unpaid Leave">Unpaid Leave</option>
+            </select>
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label font-mono uppercase text-xs">Start Date</label>
+            <input 
+              type="date" 
+              className="form-input" 
+              value={newRequest.start}
+              onChange={(e) => setNewRequest({...newRequest, start: e.target.value})}
+            />
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label font-mono uppercase text-xs">End Date</label>
+            <input 
+              type="date" 
+              className="form-input" 
+              value={newRequest.end}
+              onChange={(e) => setNewRequest({...newRequest, end: e.target.value})}
+            />
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label font-mono uppercase text-xs">Reason</label>
+            <textarea 
+              className="form-input" 
+              rows="3"
+              value={newRequest.reason}
+              onChange={(e) => setNewRequest({...newRequest, reason: e.target.value})}
+            ></textarea>
+          </div>
+          
+          <div className="drawer-footer mt-auto pt-6 border-t border-[var(--border-strong)]">
+            <button type="submit" className="btn-primary w-full py-3 justify-center">
+              Submit Request
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

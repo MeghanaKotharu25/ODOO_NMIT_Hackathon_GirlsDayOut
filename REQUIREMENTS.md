@@ -1,47 +1,51 @@
-# Dayflow HRMS - Product Requirements
+# Dayflow HRMS - Product Requirements (Delivered)
 
 ## Overview
-Dayflow is a web-based Human Resources Management System designed to handle core HR operations with an emphasis on a premium user experience and clear data hierarchy.
+Dayflow is a web-based Human Resources Management System that we successfully transformed from a standard template into a **premium, cinematic "Operating System"** experience.
 
-## User Roles
-The system must support the following Role-Based Access Control (RBAC):
-1. **Employee**: Can view their own profile, attendance history, submit time-off requests, and view their salary breakdown.
-2. **HR/Admin**: Has elevated privileges. Can view the employee directory, approve/reject time-off requests, view company-wide attendance logs, and manage salary data.
+## Completed Technical Architecture
+We have implemented the following architectural features on the `frontend-build` branch:
 
-## Functional Requirements
+1. **Authentication Context (`AuthContext.jsx`)**
+   - Simulated session management mimicking a secure JWT flow.
+   - `ProtectedRoute.jsx` component acting as a routing gatekeeper.
 
-### 1. Dashboard
-- Display real-time KPI metrics (Headcount, Attendance Rate, Pending Requests).
-- Render visual charts tracking attendance trends.
-- Display a "Needs Attention" panel highlighting actionable items (e.g., pending leave approvals).
+2. **Global Interaction Layer (`ToastContext.jsx`)**
+   - A centralized, globally available Toast Engine providing immediate, tactile feedback for user operations (e.g., "Session Terminated", "PDF Generated", "Record Added").
 
-### 2. Employee Directory
-- Display a searchable grid/list of all employees.
-- Filter employees by department and status.
-- Clicking an employee card navigates to their detailed personnel record.
+3. **Cinematic Visual Engine**
+   - Global SVG film grain overlay.
+   - Route transition animations (fade and translate) mapped to component mounting.
+   - Boot sequence CRT turn-on effect via CSS Keyframes.
+   - Dynamic, interactive Custom Cursor system replacing default browser pointers.
 
-### 3. Profile & Personnel Records
-- Display comprehensive employee data including Job Title, Department, Join Date, and Contact Information.
-- Provide a tabbed interface separating general information, security settings, and private documents (like Resumes).
-- **Security Rule**: Salary and secure documents should only be visible to the specific employee or HR Admins.
+## Completed Functional Requirements
 
-### 4. Attendance Module
-- Provide a "Check In" and "Check Out" mechanism for daily tracking.
-- Calculate and display total hours worked per day.
-- **Admin View**: Provide a data-dense log table displaying historical check-ins across the entire organization, with filtering and export capabilities.
+### 1. 🟢 Dashboard (Command Center)
+- Real-time KPI metrics displaying attendance trends.
+- SVG Bar Charts rendering historical check-in data.
+- "Needs Attention" ledger with actionable internal routing links.
+- **NEW**: Live scrolling Monospace Ticker Tape for system status.
+- **NEW**: Glitch-text revealing greeting for authenticated user.
 
-### 5. Time Off Module
-- Display dynamic leave balances (Paid, Sick, Unpaid).
-- Provide a form for employees to request future time off with a reason.
-- **Admin View**: Display a queue of pending requests requiring manual Approval or Rejection.
+### 2. 🟢 Employee Directory
+- Real-time text query filtering (Name & Department).
+- Animated Dropdown filter integration.
+- Custom "Sliding Drawer" architecture for creating new Employee Records, bypassing traditional intrusive modals.
 
-### 6. Salary Module (Admin/Confidential)
-- Display a clear breakdown of gross salary components (Base, HRA, Allowances).
-- Display a breakdown of deductions (Taxes, Insurance).
-- Calculate and highlight the final Net Salary.
+### 3. 🟢 Profile & Settings (Self-Service)
+- Complete self-service UI for updating personal telemetry and security details.
+- High-fidelity toggle switches controlling application state (e.g., 2FA, Biometrics) wired into the Toast Engine.
 
-## Non-Functional Requirements
-- **Performance**: The UI must remain responsive and snappy.
-- **Responsiveness**: The application must be fully usable on desktop, tablet, and mobile devices, utilizing adaptive grid layouts.
-- **Design Aesthetic**: The interface must adhere to the "quiet, premium operating system" aesthetic. No generic SaaS templates. Use subtle micro-animations and off-white/charcoal palettes. 
-- **Security**: All backend API calls must enforce RLS (Row Level Security) via Supabase to prevent data leaks between employees.
+### 4. 🟢 Attendance & Time Off Modules
+- Rendered historical data logs in custom data-tables.
+- Sliding drawer implementation for "Request Time Off" flows.
+
+### 5. 🟢 Salary Module
+- Visual breakdown of gross salary structures.
+- Wired PDF download buttons triggering contextual Toast feedback.
+
+## Non-Functional Requirements (Met)
+- **Aesthetic**: Strictly adhered to a monochromatic, heavily structured typographic layout using CSS Grid and physical borders.
+- **Motion**: Ensured all transitions use our custom `cubic-bezier(0.16, 1, 0.3, 1)` easing for a snappy, physical feel.
+- **Statefulness**: Though backend-less for this hackathon build, every button and form is fully wired to local React state, creating a seamless illusion of a fully operational system.
