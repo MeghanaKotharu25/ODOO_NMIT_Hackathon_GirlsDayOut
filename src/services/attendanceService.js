@@ -90,7 +90,7 @@ export const attendanceService = {
     if (!isSupabaseConfigured) return { present: 0, absent: 0, leave: 0, total: 0 };
     const today = new Date().toISOString().split('T')[0];
 
-    const { data: totalProfiles } = await supabase
+    const { count: totalProfiles } = await supabase
       .from('profiles')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'active');
@@ -100,7 +100,7 @@ export const attendanceService = {
       .select('status')
       .eq('date', today);
 
-    const total = totalProfiles?.length ?? 0;
+    const total = totalProfiles ?? 0;
     let present = 0, absent = 0, leave = 0;
     if (attendanceToday) {
       attendanceToday.forEach(a => {
