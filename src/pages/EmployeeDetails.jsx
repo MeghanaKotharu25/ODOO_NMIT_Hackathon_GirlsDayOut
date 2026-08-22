@@ -28,7 +28,7 @@ export function EmployeeDetails() {
         .then(data => {
           if (isMounted && data) {
             setEmployee(data);
-            if (data.uuid) {
+            if (data.uuid && profileService?.getPrivateInfo) {
               profileService.getPrivateInfo(data.uuid).then(info => {
                 if (isMounted && info) setPrivateInfo(info);
               }).catch(() => {});

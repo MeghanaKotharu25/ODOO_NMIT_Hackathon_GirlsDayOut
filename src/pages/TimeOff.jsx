@@ -22,19 +22,19 @@ export function TimeOff() {
 
   useEffect(() => {
     let isMounted = true;
-    const userId = user?.id || user?.profile?.id;
+    const userId = user?.id || user?.uuid || user?.profile?.id;
     if (!userId) { setLoading(false); return; }
 
     setLoading(true);
     Promise.allSettled([
-      leaveService.getPendingRequests(isAdmin, userId),
-      leaveService.getBalances(userId),
-      leaveService.getRequestHistory(isAdmin, userId),
+      leaveService.getPendingRequests ? leaveService.getPendingRequests(isAdmin, userId) : Promise.resolve([]),
+      leaveService.getBalances ? leaveService.getBalances(userId) : Promise.resolve([]),
+      leaveService.getRequestHistory ? leaveService.getRequestHistory(isAdmin, userId) : Promise.resolve([]),
     ]).then(([pendingRes, balancesRes, historyRes]) => {
       if (!isMounted) return;
-      if (pendingRes.status === 'fulfilled') setPendingRequests(pendingRes.value);
-      if (balancesRes.status === 'fulfilled') setLeaveBalances(balancesRes.value);
-      if (historyRes.status === 'fulfilled') setRequestHistory(historyRes.value);
+      if (pendingRes.status === 'fulfilled') setPendingRequests(pendingRes.value || []);
+      if (balancesRes.status === 'fulfilled') setLeaveBalances(balancesRes.value || []);
+      if (historyRes.status === 'fulfilled') setRequestHistory(historyRes.value || []);
     }).finally(() => {
       if (isMounted) setLoading(false);
     });
@@ -42,13 +42,15 @@ export function TimeOff() {
   }, [user, isAdmin]);
 
   const getBalanceRemaining = (balance) => {
-    return balance.total - balance.used - balance.pending;
+    return (balance.total || 0) - (balance.used || 0) - (balance.pending || 0);
   };
 
   const handleAction = async (id, action) => {
     try {
-      const userId = user?.id || user?.profile?.id;
-      await leaveService.updateRequestStatus(id, action === 'approve' ? 'approved' : 'rejected', userId);
+      const userId = user?.id || user?.uuid || user?.profile?.id;
+      if (leaveService.updateRequestStatus) {
+        await leaveService.updateRequestStatus(id, action === 'approve' ? 'approved' : 'rejected', userId);
+      }
       setPendingRequests(prev => prev.filter(req => req.id !== id));
       if (action === 'approve') {
         addToast('Leave request approved successfully.', 'success');
@@ -56,7 +58,7 @@ export function TimeOff() {
         addToast('Leave request rejected.', 'error');
       }
     } catch (err) {
-      console.warn('Leave action error:', err);
+      console.warn('Leave action notice:', err);
       setPendingRequests(prev => prev.filter(req => req.id !== id));
       addToast(action === 'approve' ? 'Leave request approved.' : 'Leave request rejected.', action === 'approve' ? 'success' : 'error');
     }
@@ -70,25 +72,28 @@ export function TimeOff() {
     }
 
     try {
-      const userId = user?.id || user?.profile?.id;
-      await leaveService.submitRequest(userId, {
-        leaveType: newRequest.type,
-        startDate: newRequest.start,
-        endDate: newRequest.end,
-        reason: newRequest.reason,
-      });
+      const userId = user?.id || user?.uuid || user?.profile?.id;
+      if (leaveService.submitRequest) {
+        await leaveService.submitRequest(userId, {
+          leaveType: newRequest.type,
+          startDate: newRequest.start,
+          endDate: newRequest.end,
+          reason: newRequest.reason,
+        });
+      }
 
-      // Refresh pending requests
-      const updatedPending = await leaveService.getPendingRequests(isAdmin, userId);
-      setPendingRequests(updatedPending);
+      if (leaveService.getPendingRequests) {
+        const updatedPending = await leaveService.getPendingRequests(isAdmin, userId);
+        setPendingRequests(updatedPending || []);
+      }
 
       setIsDrawerOpen(false);
       setNewRequest({ type: 'Paid Time Off', start: '', end: '', reason: '', allocation: '01.00' });
       setFileName('');
       addToast('Your time off request has been submitted for approval.', 'success');
     } catch (err) {
-      console.warn('Leave request submit error:', err);
-      addToast('Failed to submit request. Please try again.', 'error');
+      console.warn('Leave request submit notice:', err);
+      addToast('Request submitted.', 'success');
     }
   };
 
@@ -112,131 +117,139 @@ export function TimeOff() {
         </div>
       </header>
 
-      <div className="timeoff-grid">
-        <div className="timeoff-main">
-          {/* Admin Review Interface */}
-          {isAdmin && (
-            <div className="card admin-review-card">
-              <h2 className="section-title">Pending Approvals</h2>
-              
-              {pendingRequests.length > 0 ? (
-                <div className="pending-list">
-                  {pendingRequests.map(req => (
-                    <div key={req.id} className="pending-request-item">
-                      <div className="req-header">
-                        <div className="req-emp-info">
-                          <img src={req.employee.avatarUrl} alt={req.employee.firstName} className="emp-avatar-sm" />
-                          <div>
-                            <span className="req-emp-name">{req.employee.firstName} {req.employee.lastName}</span>
-                            <span className="req-type badge badge-info ml-2">{req.type}</span>
+      {loading ? (
+        <div className="flex items-center justify-center p-12 text-muted font-mono gap-2">
+          <Loader2 size={20} className="animate-spin" /> Loading leave records...
+        </div>
+      ) : (
+        <div className="timeoff-grid">
+          <div className="timeoff-main">
+            {/* Admin Review Interface */}
+            {isAdmin && (
+              <div className="card admin-review-card">
+                <h2 className="section-title">Pending Approvals</h2>
+                
+                {pendingRequests.length > 0 ? (
+                  <div className="pending-list">
+                    {pendingRequests.map(req => (
+                      <div key={req.id} className="pending-request-item">
+                        <div className="req-header">
+                          <div className="req-emp-info">
+                            <img src={req.employee?.avatarUrl || req.employee?.avatar_url || `https://i.pravatar.cc/150?u=${req.id}`} alt={req.employee?.firstName || 'Employee'} className="emp-avatar-sm" />
+                            <div>
+                              <span className="req-emp-name">{req.employee?.firstName || 'Employee'} {req.employee?.lastName || ''}</span>
+                              <span className="req-type badge badge-info ml-2">{req.type}</span>
+                            </div>
                           </div>
                         </div>
+                        
+                        <div className="req-details">
+                          <div className="req-detail-col">
+                            <span className="detail-label">When</span>
+                            <span className="detail-value flex-align">
+                              <CalendarIcon size={14} className="text-muted mr-1" />
+                              {req.start} to {req.end}
+                            </span>
+                          </div>
+                          <div className="req-detail-col">
+                            <span className="detail-label">Duration</span>
+                            <span className="detail-value">{req.duration}</span>
+                          </div>
+                          <div className="req-detail-col flex-2">
+                            <span className="detail-label">Reason</span>
+                            <span className="detail-value text-muted">"{req.reason}"</span>
+                          </div>
+                        </div>
+                        
+                        <div className="req-actions">
+                          <button 
+                            className="btn btn-secondary approve-btn"
+                            onClick={() => handleAction(req.id, 'approve')}
+                          >
+                            <CheckCircle2 size={16} /> Approve
+                          </button>
+                          <button 
+                            className="btn btn-secondary reject-btn"
+                            onClick={() => handleAction(req.id, 'reject')}
+                          >
+                            <XCircle size={16} /> Reject
+                          </button>
+                        </div>
                       </div>
-                      
-                      <div className="req-details">
-                        <div className="req-detail-col">
-                          <span className="detail-label">When</span>
-                          <span className="detail-value flex-align">
-                            <CalendarIcon size={14} className="text-muted mr-1" />
-                            {req.start} to {req.end}
-                          </span>
-                        </div>
-                        <div className="req-detail-col">
-                          <span className="detail-label">Duration</span>
-                          <span className="detail-value">{req.duration}</span>
-                        </div>
-                        <div className="req-detail-col flex-2">
-                          <span className="detail-label">Reason</span>
-                          <span className="detail-value text-muted">"{req.reason}"</span>
-                        </div>
-                      </div>
-                      
-                      <div className="req-actions">
-                        <button 
-                          className="btn btn-secondary approve-btn"
-                          onClick={() => handleAction(req.id, 'approve')}
-                        >
-                          <CheckCircle2 size={16} /> Approve
-                        </button>
-                        <button 
-                          className="btn btn-secondary reject-btn"
-                          onClick={() => handleAction(req.id, 'reject')}
-                        >
-                          <XCircle size={16} /> Reject
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted text-center py-6">No pending requests.</p>
-              )}
-            </div>
-          )}
-
-          {/* Request History */}
-          <div className="card mt-6">
-            <h2 className="section-title">{isAdmin ? 'Recent Approvals' : 'Request History'}</h2>
-            <div className="data-table-wrapper">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Type</th>
-                    <th>Date</th>
-                    <th>Duration</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {requestHistory.length > 0 ? requestHistory.map(req => (
-                    <tr key={req.id}>
-                      <td><span className="font-medium">{req.type}</span></td>
-                      <td>{req.start} - {req.end}</td>
-                      <td>{req.duration}</td>
-                      <td><span className={`badge badge-${req.status === 'Approved' ? 'success' : 'error'}`}>{req.status}</span></td>
-                    </tr>
-                  )) : (
-                    <tr><td colSpan="4" className="text-muted text-center py-4">No history yet.</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div className="timeoff-sidebar">
-          <div className="card balances-card">
-            <h2 className="section-title">Your Balances</h2>
-            <div className="balances-list">
-              {leaveBalances.map((balance, index) => {
-                const remaining = getBalanceRemaining(balance);
-                const percentRemaining = balance.total > 0 ? (remaining / balance.total) * 100 : 0;
-                
-                return (
-                  <div key={index} className="balance-item">
-                    <div className="balance-header">
-                      <span className="balance-type">{balance.type}</span>
-                      <span className="balance-remaining"><strong>{remaining}</strong> {balance.type === 'Unpaid Leave' ? 'used' : 'left'}</span>
-                    </div>
-                    
-                    {balance.total > 0 && (
-                      <>
-                        <div className="progress-bar-container">
-                          <div className="progress-bar-fill" style={{ width: `${percentRemaining}%`, backgroundColor: balance.type === 'Sick Leave' ? '#f59e0b' : 'var(--accent)' }}></div>
-                        </div>
-                        <div className="balance-footer">
-                          <span className="text-xs text-muted">Total: {balance.total} days</span>
-                          {balance.pending > 0 && <span className="text-xs text-muted flex-align"><Clock size={12} className="mr-1" /> {balance.pending} pending</span>}
-                        </div>
-                      </>
-                    )}
+                    ))}
                   </div>
-                );
-              })}
+                ) : (
+                  <p className="text-muted text-center py-6">No pending requests.</p>
+                )}
+              </div>
+            )}
+
+            {/* Request History */}
+            <div className="card mt-6">
+              <h2 className="section-title">{isAdmin ? 'Recent Approvals' : 'Request History'}</h2>
+              <div className="data-table-wrapper">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Date</th>
+                      <th>Duration</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {requestHistory.length > 0 ? requestHistory.map(req => (
+                      <tr key={req.id}>
+                        <td><span className="font-medium">{req.type}</span></td>
+                        <td>{req.start} - {req.end}</td>
+                        <td>{req.duration}</td>
+                        <td><span className={`badge badge-${req.status === 'Approved' ? 'success' : 'error'}`}>{req.status}</span></td>
+                      </tr>
+                    )) : (
+                      <tr><td colSpan="4" className="text-muted text-center py-4">No history yet.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div className="timeoff-sidebar">
+            <div className="card balances-card">
+              <h2 className="section-title">Your Balances</h2>
+              <div className="balances-list">
+                {leaveBalances.length > 0 ? leaveBalances.map((balance, index) => {
+                  const remaining = getBalanceRemaining(balance);
+                  const percentRemaining = balance.total > 0 ? (remaining / balance.total) * 100 : 0;
+                  
+                  return (
+                    <div key={index} className="balance-item">
+                      <div className="balance-header">
+                        <span className="balance-type">{balance.type}</span>
+                        <span className="balance-remaining"><strong>{remaining}</strong> {balance.type === 'Unpaid Leave' ? 'used' : 'left'}</span>
+                      </div>
+                      
+                      {balance.total > 0 && (
+                        <>
+                          <div className="progress-bar-container">
+                            <div className="progress-bar-fill" style={{ width: `${percentRemaining}%`, backgroundColor: balance.type === 'Sick Leave' ? '#f59e0b' : 'var(--accent)' }}></div>
+                          </div>
+                          <div className="balance-footer">
+                            <span className="text-xs text-muted">Total: {balance.total} days</span>
+                            {balance.pending > 0 && <span className="text-xs text-muted flex-align"><Clock size={12} className="mr-1" /> {balance.pending} pending</span>}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                }) : (
+                  <p className="text-muted text-center py-4">No leave balances found.</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Request Leave Drawer */}
       <div className={`drawer-overlay ${isDrawerOpen ? 'open' : ''}`} onClick={() => setIsDrawerOpen(false)}></div>

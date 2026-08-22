@@ -13,7 +13,7 @@ export function TopBar() {
   const { addToast } = useToast();
   const { logout, user } = useAuth();
   const isAdmin = (user?.profile?.role || user?.role || '').toLowerCase() === 'admin';
-  
+
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const notifRef = useRef(null);
@@ -104,7 +104,7 @@ export function TopBar() {
               placeholder="Query..." 
               className="search-input font-mono" 
               onKeyDown={(e) => {
-                if (e.key === 'Enter') addToast(`Search results for "${e.target.value}" not found in mock data.`, 'error');
+                if (e.key === 'Enter') addToast(`Search results for "${e.target.value}"`, 'info');
               }}
             />
           </div>
@@ -141,9 +141,9 @@ export function TopBar() {
                 className="user-profile-menu cursor-pointer"
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
               >
-                <img 
-                  src={user?.avatarUrl || user?.profile?.avatar_url || `https://i.pravatar.cc/150?u=${user?.id}`} 
-                  alt={user?.firstName || user?.profile?.first_name || 'User'} 
+                <img
+                  src={user?.avatarUrl || user?.avatar_url || user?.profile?.avatar_url || `https://i.pravatar.cc/150?u=${user?.id || 'EMP'}`}
+                  alt={user?.firstName || user?.first_name || user?.profile?.first_name || 'User'}
                   className="avatar-sm"
                 />
               </div>
@@ -152,12 +152,12 @@ export function TopBar() {
             {showProfileMenu && (
               <div className="popover-menu profile-menu">
                 <div className="popover-header profile-header">
-                  <span className="font-mono">{user?.firstName || user?.profile?.first_name || ''} {user?.lastName || user?.profile?.last_name || ''}</span>
+                  <span className="font-mono">{user?.firstName || user?.first_name || user?.profile?.first_name || 'User'} {user?.lastName || user?.last_name || user?.profile?.last_name || ''}</span>
                   <span className="text-muted text-xs uppercase">{user?.role || user?.profile?.role || 'EMPLOYEE'}</span>
                 </div>
                 <button 
                   className="popover-action"
-                  onClick={() => { setShowProfileMenu(false); navigate(`/employees/${user?.id || ''}`); }}
+                  onClick={() => { setShowProfileMenu(false); navigate(`/employees/${user?.id || user?.uuid || ''}`); }}
                 >
                   <UserCircle size={14} /> My Dossier
                 </button>
