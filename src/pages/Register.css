@@ -21,8 +21,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--accent-primary);
-  color: white;
+  background-color: var(--text-primary);
+  color: var(--bg-main);
   border-radius: var(--radius-sm);
   width: 40px;
   height: 40px;
@@ -30,7 +30,7 @@
 }
 
 .icon-btn-primary:hover {
-  background-color: var(--accent-primary-hover);
+  background-color: var(--text-secondary);
 }
 
 .password-wrapper {
