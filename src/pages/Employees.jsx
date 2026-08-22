@@ -151,13 +151,13 @@ export function Employees() {
           {filteredEmployees.map((emp, index) => (
             <motion.div 
               key={emp.id} 
-              className={`roster-card ${isAdmin ? 'is-admin' : ''}`}
-              onClick={() => isAdmin && navigate(`/employees/${emp.uuid || emp.id}`)}
-              style={{ cursor: isAdmin ? 'pointer' : 'default' }}
+              className="roster-card"
+              onClick={() => navigate(`/employees/${emp.uuid || emp.id}`)}
+              style={{ cursor: 'pointer' }}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
-              whileHover={isAdmin ? { y: -4, transition: { duration: 0.2, ease: "easeOut" } } : {}}
+              whileHover={{ y: -4, transition: { duration: 0.2, ease: "easeOut" } }}
             >
               <div className="roster-image-container">
                 <img src={emp.avatarUrl} alt={emp.firstName} className="roster-avatar" />
@@ -167,7 +167,14 @@ export function Employees() {
               </div>
 
               <div className="roster-details">
-                <h3 className="roster-name">[{emp.firstName} {emp.lastName}]</h3>
+                <div className="roster-identity">
+                  <span className="roster-id">{emp.id}</span>
+                  <h3 className="roster-name">[{emp.firstName} {emp.lastName}]</h3>
+                </div>
+                <div className="roster-role">
+                  <span className="role-title">{emp.position}</span>
+                  <span className="role-dept">{emp.department}</span>
+                </div>
               </div>
             </motion.div>
           ))}

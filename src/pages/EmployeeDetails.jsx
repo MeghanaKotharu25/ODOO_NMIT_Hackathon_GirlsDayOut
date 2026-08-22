@@ -4,16 +4,20 @@ import { ArrowLeft, Mail, Phone, MapPin, Briefcase, Calendar as CalendarIcon, Sh
 import { employeeService } from '../services/employeeService';
 import { profileService } from '../services/profileService';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 import './EmployeeDetails.css';
 
 export function EmployeeDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToast } = useToast();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('general');
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const isAdmin = (user?.profile?.role || user?.role || '').toLowerCase() === 'admin';
 
   // States for Private and Salary Info
   const [privateInfo, setPrivateInfo] = useState({
@@ -151,18 +155,22 @@ export function EmployeeDetails() {
           >
             Resume
           </button>
-          <button 
-            className={`dossier-tab ${activeTab === 'private' ? 'active' : ''}`}
-            onClick={() => setActiveTab('private')}
-          >
-            Private Info
-          </button>
-          <button 
-            className={`dossier-tab ${activeTab === 'salary' ? 'active' : ''}`}
-            onClick={() => setActiveTab('salary')}
-          >
-            Salary Info
-          </button>
+          {isAdmin && (
+            <>
+              <button 
+                className={`dossier-tab ${activeTab === 'private' ? 'active' : ''}`}
+                onClick={() => setActiveTab('private')}
+              >
+                Private Info
+              </button>
+              <button 
+                className={`dossier-tab ${activeTab === 'salary' ? 'active' : ''}`}
+                onClick={() => setActiveTab('salary')}
+              >
+                Salary Info
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -225,7 +233,7 @@ export function EmployeeDetails() {
         )}
 
         {/* PRIVATE INFO TAB */}
-        {activeTab === 'private' && (
+        {activeTab === 'private' && isAdmin && (
           <div className="private-info-grid card-box p-6 mt-4">
             <div className="flex justify-between items-center mb-6 border-b border-[var(--border-strong)] pb-4">
               <h3 className="font-serif text-xl">Personal & Bank Details</h3>
@@ -306,7 +314,7 @@ export function EmployeeDetails() {
         )}
 
         {/* SALARY INFO TAB */}
-        {activeTab === 'salary' && (
+        {activeTab === 'salary' && isAdmin && (
           <div className="salary-info-grid card-box p-6 mt-4 font-mono text-sm">
             <div className="flex justify-between items-center mb-6 border-b border-[var(--border-strong)] pb-4">
               <h3 className="font-serif text-xl">Salary Config & Components</h3>
