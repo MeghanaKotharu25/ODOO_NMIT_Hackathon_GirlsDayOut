@@ -11,6 +11,7 @@ export function Employees() {
   
   const [employeesList, setEmployeesList] = useState(mockEmployees);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterDept, setFilterDept] = useState('All');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // Form state for new employee
@@ -27,11 +28,18 @@ export function Employees() {
     }
   };
 
-  const filteredEmployees = employeesList.filter(emp => 
-    emp.firstName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    emp.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.department.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredEmployees = employeesList.filter(emp => {
+    const matchesSearch = 
+      emp.firstName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      emp.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      emp.department.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesDept = filterDept === 'All' || emp.department === filterDept;
+    
+    return matchesSearch && matchesDept;
+  });
+
+  const departments = ['All', ...new Set(employeesList.map(emp => emp.department))];
 
   const handleAddEmployee = (e) => {
     e.preventDefault();
@@ -74,15 +82,27 @@ export function Employees() {
             <Search className="search-icon" size={16} />
             <input 
               type="text" 
-              placeholder="Query name or department..." 
+              placeholder="Query name..." 
               className="search-input font-mono"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          
+          <select 
+            className="filter-select font-mono"
+            value={filterDept}
+            onChange={(e) => setFilterDept(e.target.value)}
+          >
+            {departments.map(dept => (
+              <option key={dept} value={dept}>{dept}</option>
+            ))}
+          </select>
+
           <button 
+            type="button"
             className="btn-primary" 
-            style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+            style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}
             onClick={() => setIsDrawerOpen(true)}
           >
             + Add Record

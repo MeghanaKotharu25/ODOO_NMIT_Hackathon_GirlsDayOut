@@ -73,6 +73,21 @@
   color: var(--text-muted);
 }
 
+.filter-select {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-strong);
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  border-radius: 0;
+  outline: none;
+  cursor: pointer;
+}
+
+.filter-select:focus {
+  border-color: var(--text-primary);
+}
+
 /* Roster Grid */
 .roster-grid {
   display: grid;
