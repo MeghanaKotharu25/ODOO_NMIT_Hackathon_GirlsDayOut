@@ -8,7 +8,7 @@ import { CustomCursor } from './components/layout/CustomCursor';
 import { Dashboard } from './pages/Dashboard';
 import { Employees } from './pages/Employees';
 import { EmployeeDetails } from './pages/EmployeeDetails';
-import { Attendance } from './pages/Attendance';
+import Attendance from './pages/employees/Attendance';
 import { TimeOff } from './pages/TimeOff';
 import { Salary } from './pages/Salary';
 import { Login } from './pages/Login';
