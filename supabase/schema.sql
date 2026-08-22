@@ -246,3 +246,38 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- ==========================================
+-- ROW LEVEL SECURITY (RLS) POLICIES
+-- ==========================================
+-- Enable RLS on all tables
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.employee_private_info ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.employee_resumes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.attendance ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.leave_balances ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.leave_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.payroll ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.salary_components ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.activity_logs ENABLE ROW LEVEL SECURITY;
+
+-- Profiles: Anyone can view profiles, but only users themselves (or admin) can update their own
+CREATE POLICY "Profiles are viewable by everyone in organization."
+    ON public.profiles FOR SELECT
+    USING (true);
+
+CREATE POLICY "Users can insert their own profile."
+    ON public.profiles FOR INSERT
+    WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile."
+    ON public.profiles FOR UPDATE
+    USING (auth.uid() = id);
+
+-- Private Info: Only the user themselves can view/update their own private info
+CREATE POLICY "Users can view own private info."
+    ON public.employee_private_info FOR SELECT
+    USING (employee_id IN (SELECT id FROM public.profiles WHERE id = auth.uid()));
+
+-- Admins can do everything (Bypassed via Service Role Key usually, but explicit policies can be added here)
+-- Example: CREATE POLICY "Admins can view all" ON public.profiles FOR ALL USING (auth.uid() IN (SELECT id FROM profiles WHERE role = 'admin'));

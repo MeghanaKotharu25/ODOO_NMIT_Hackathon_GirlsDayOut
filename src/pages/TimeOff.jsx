@@ -43,6 +43,25 @@ export function TimeOff() {
       addToast('Please fill out all request details.', 'error');
       return;
     }
+    
+    // Calculate rough duration in days for mock display
+    const startD = new Date(newRequest.start);
+    const endD = new Date(newRequest.end);
+    const diffTime = Math.abs(endD - startD);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+    const mockNewRequest = {
+      id: Date.now(),
+      employee: mockEmployees[2], // Assuming the current user (Elena) is requesting
+      type: newRequest.type,
+      start: startD.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      end: endD.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      duration: `${diffDays} days`,
+      reason: newRequest.reason
+    };
+
+    setPendingRequests([mockNewRequest, ...pendingRequests]);
+
     setIsDrawerOpen(false);
     setNewRequest({ type: 'Paid Leave', start: '', end: '', reason: '' });
     addToast('Your time off request has been submitted for approval.', 'success');

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Bell, Search, LayoutDashboard, Users, Clock, Calendar, HelpCircle, Settings, UserCircle, LogOut } from 'lucide-react';
+import { Bell, Search, LayoutDashboard, Users, Clock, Calendar, HelpCircle, Settings, UserCircle, LogOut, DollarSign } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Magnetic } from './Magnetic';
 import { mockCurrentUser } from '../../data/mockData';
@@ -38,6 +38,7 @@ export function TopBar() {
     { name: 'Employees', path: '/employees', icon: Users },
     { name: 'Attendance', path: '/attendance', icon: Clock },
     { name: 'Time Off', path: '/time-off', icon: Calendar },
+    { name: 'Payroll', path: '/salary', icon: DollarSign },
   ];
 
   const secondaryNav = [

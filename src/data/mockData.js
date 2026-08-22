@@ -134,3 +134,22 @@ export const mockEmployees = [
 ];
 
 export const mockCurrentUser = mockEmployees[2]; // Elena (HR Director / Admin)
+
+export const mockPayroll = mockEmployees.map((emp, index) => {
+  const baseSalary = 5000 + (index * 500);
+  const deductions = baseSalary * 0.15; // 15% tax/deductions
+  const netPay = baseSalary - deductions;
+
+  return {
+    employeeId: emp.id,
+    firstName: emp.firstName,
+    lastName: emp.lastName,
+    department: emp.department,
+    baseSalary: baseSalary,
+    grossEarnings: baseSalary,
+    totalDeductions: deductions,
+    netPayable: netPay,
+    status: index % 3 === 0 ? "Processed" : "Paid",
+    lastUpdated: new Date().toISOString().split('T')[0]
+  };
+});

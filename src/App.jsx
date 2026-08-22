@@ -10,7 +10,7 @@ import { Employees } from './pages/Employees';
 import { EmployeeDetails } from './pages/EmployeeDetails';
 import { Attendance } from './pages/Attendance';
 import { TimeOff } from './pages/TimeOff';
-import { Salary } from './pages/Salary';
+import { Payroll } from './pages/Payroll';
 import { Login } from './pages/Login';
 import { LoadingScreen } from './pages/LoadingScreen';
 import { MyProfile } from './pages/MyProfile';
@@ -42,7 +42,7 @@ function App() {
           <Route path="employees/:id" element={<EmployeeDetails />} />
           <Route path="attendance" element={<Attendance />} />
           <Route path="time-off" element={<TimeOff />} />
-          <Route path="salary" element={<Salary />} />
+          <Route path="salary" element={<Payroll />} />
           <Route path="profile" element={<MyProfile />} />
           <Route path="settings" element={<Settings />} />
           <Route path="help" element={<Help />} />
