@@ -97,7 +97,6 @@ export default function Attendance() {
                 <th>Work Hours</th>
                 <th>Extra Hours</th>
                 <th>Status</th>
-                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -144,24 +143,29 @@ export default function Attendance() {
                       <select
                         className={`admin-status-select ${drafts[row.profile.id]?.status}`}
                         value={drafts[row.profile.id]?.status || row.status}
-                        onChange={(event) => updateDraft(row.profile.id, 'status', event.target.value)}
+                        disabled={savingId === row.profile.id}
+                        onChange={async (event) => {
+                          const newStatus = event.target.value;
+                          updateDraft(row.profile.id, 'status', newStatus);
+                          
+                          // Auto-save when status changes
+                          setSavingId(row.profile.id);
+                          setError('');
+                          const draftToSave = { ...drafts[row.profile.id], status: newStatus };
+                          const result = await attendanceService.saveAdminRecord(row, selectedDate, draftToSave);
+                          if (result.error) setError(result.error.message);
+                          else await loadAttendance();
+                          setSavingId(null);
+                        }}
                       >
                         {statuses.map((status) => <option key={status} value={status}>{status.replace('_', '-')}</option>)}
                       </select>
-                    </td>
-                    <td>
-                      <div className="admin-edit-actions">
-                        <input aria-label={`Check-in time for ${row.profile.first_name}`} type="time" value={drafts[row.profile.id]?.checkIn || ''} onChange={(event) => updateDraft(row.profile.id, 'checkIn', event.target.value)} />
-                        <input aria-label={`Check-out time for ${row.profile.first_name}`} type="time" value={drafts[row.profile.id]?.checkOut || ''} onChange={(event) => updateDraft(row.profile.id, 'checkOut', event.target.value)} />
-                        <button className="btn btn-primary" type="button" onClick={() => saveRecord(row)} disabled={savingId === row.profile.id}>
-                          <Save size={15} /> {savingId === row.profile.id ? 'Saving' : 'Save'}
-                        </button>
-                      </div>
+                      {savingId === row.profile.id && <span style={{fontSize: '0.75rem', marginLeft: '8px', color: 'var(--text-muted)'}}>Saving...</span>}
                     </td>
                   </tr>
                 );
               }) : (
-                <tr><td colSpan="7" className="attendance-empty">No employees found.</td></tr>
+                <tr><td colSpan="6" className="attendance-empty">No employees found.</td></tr>
               )}
             </tbody>
           </table>
