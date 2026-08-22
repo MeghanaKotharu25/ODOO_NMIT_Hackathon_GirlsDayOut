@@ -3,22 +3,17 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Mail, Phone, MapPin, Briefcase, Calendar as CalendarIcon, Shield, FileText, Loader2 } from 'lucide-react';
 import { employeeService } from '../services/employeeService';
 import { profileService } from '../services/profileService';
-import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import './EmployeeDetails.css';
 
 export function EmployeeDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState('general');
   const [employee, setEmployee] = useState(null);
   const [privateInfo, setPrivateInfo] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  // Salary calculator state
-  const [monthWage, setMonthWage] = useState(50000);
 
   useEffect(() => {
     let isMounted = true;
@@ -63,18 +58,6 @@ export function EmployeeDetails() {
     );
   }
 
-  const isAdmin = user?.role === 'ADMIN' || user?.role === 'HR' || user?.profile?.role === 'admin';
-
-  // Salary Calculations
-  const yearlyWage = monthWage * 12;
-  const baseSalary = monthWage * 0.5;
-  const standardAllowance = baseSalary * 0.15;
-  const performanceBonus = baseSalary * 0.0833;
-  const leaveTravelAllowance = baseSalary * 0.0833;
-  const fixedAllowance = baseSalary * 0.1834;
-  const pfContribution = baseSalary * 0.12;
-  const professionalTax = 200;
-
   return (
     <div className="dossier-page">
       <button className="btn-back" onClick={() => navigate('/employees')}>
@@ -115,14 +98,6 @@ export function EmployeeDetails() {
           >
             Private Info
           </button>
-          {isAdmin && (
-            <button 
-              className={`dossier-tab ${activeTab === 'salary' ? 'active' : ''}`}
-              onClick={() => setActiveTab('salary')}
-            >
-              Salary Info
-            </button>
-          )}
         </div>
       </div>
 
@@ -221,65 +196,6 @@ export function EmployeeDetails() {
           </div>
         )}
 
-        {/* SALARY INFO TAB (ADMIN ONLY) */}
-        {activeTab === 'salary' && isAdmin && (
-          <div className="dossier-section">
-            <h2 className="section-title">Salary Configuration</h2>
-            
-            <div className="data-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-6)' }}>
-              <div className="data-field">
-                <span className="field-label">Monthly Wage</span>
-                <input 
-                  type="number" 
-                  value={monthWage} 
-                  onChange={(e) => setMonthWage(Number(e.target.value))}
-                  className="form-input font-mono"
-                  style={{ fontSize: '1.1rem', maxWidth: '200px' }}
-                />
-              </div>
-              <div className="data-field">
-                <span className="field-label">Yearly Wage</span>
-                <span className="field-value font-mono">₹{yearlyWage.toLocaleString()}</span>
-              </div>
-            </div>
-
-            <h2 className="section-title" style={{ marginTop: 'var(--spacing-8)' }}>Salary Components</h2>
-            <div className="data-grid" style={{ gridTemplateColumns: '1fr auto auto' }}>
-              <div className="data-field">
-                <span className="field-label">Base Salary (50%)</span>
-                <span className="field-value font-mono">₹{baseSalary.toFixed(2)}</span>
-              </div>
-              <div className="data-field">
-                <span className="field-label">Standard Allowance (15%)</span>
-                <span className="field-value font-mono">₹{standardAllowance.toFixed(2)}</span>
-              </div>
-              <div className="data-field">
-                <span className="field-label">Performance Bonus (8.33%)</span>
-                <span className="field-value font-mono">₹{performanceBonus.toFixed(2)}</span>
-              </div>
-              <div className="data-field">
-                <span className="field-label">Leave Travel Allowance (8.33%)</span>
-                <span className="field-value font-mono">₹{leaveTravelAllowance.toFixed(2)}</span>
-              </div>
-              <div className="data-field">
-                <span className="field-label">Fixed Allowance (18.34%)</span>
-                <span className="field-value font-mono">₹{fixedAllowance.toFixed(2)}</span>
-              </div>
-            </div>
-
-            <h2 className="section-title" style={{ marginTop: 'var(--spacing-8)' }}>Deductions</h2>
-            <div className="data-grid">
-              <div className="data-field">
-                <span className="field-label">Provident Fund (PF) — 12% of Basic</span>
-                <span className="field-value font-mono">₹{pfContribution.toFixed(2)} / month</span>
-              </div>
-              <div className="data-field">
-                <span className="field-label">Professional Tax</span>
-                <span className="field-value font-mono">₹{professionalTax.toFixed(2)} / month</span>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
