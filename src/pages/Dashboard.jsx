@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 import { ArrowUpRight, ArrowDownRight, Clock, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -176,6 +176,13 @@ export function Dashboard() {
                   fontFamily: 'var(--font-mono)',
                   fontSize: '12px'
                 }}
+              />
+              <Legend 
+                wrapperStyle={{ fontFamily: 'var(--font-mono)', fontSize: '12px' }}
+                verticalAlign="top" 
+                align="right"
+                height={36}
+                iconType="square"
               />
               <Bar dataKey="present" name="Present" fill="var(--text-primary)" radius={[0, 0, 0, 0]} barSize={48} />
               <Bar dataKey="absent" name="Absent" fill="var(--text-muted)" radius={[0, 0, 0, 0]} barSize={48} />
