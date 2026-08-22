@@ -133,6 +133,14 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const changePassword = async (newPassword) => {
+    return await authService.changePassword(newPassword);
+  };
+
+  const resetPasswordForEmail = async (emailOrLoginId) => {
+    return await authService.resetPasswordForEmail(emailOrLoginId);
+  };
+
   // Compatibility aliases for frontend components
   const login = async (email, password) => {
     return await signIn(email, password);
@@ -154,6 +162,8 @@ export function AuthProvider({ children }) {
     signOut,
     login,
     logout,
+    changePassword,
+    resetPasswordForEmail,
   };
 
   return (

@@ -15,12 +15,70 @@ export const authService = {
     return data;
   },
 
-  // Sign in an existing user with email & password
-  signIn: async (email, password) => {
+  // Sign in an existing user with email or employee Login ID & password
+  signIn: async (identifier, password) => {
     if (!isSupabaseConfigured) throw new Error('Demo mode: Supabase not configured');
+
+    let targetEmail = identifier?.trim() || '';
+
+    // If identifier is not an email (e.g. employee code like OIJODO20260001 or EMP-001), resolve email from profiles
+    if (!targetEmail.includes('@')) {
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('email')
+          .ilike('employee_code', targetEmail)
+          .maybeSingle();
+
+        if (profile?.email) {
+          targetEmail = profile.email;
+        }
+      } catch (lookupErr) {
+        console.warn('Employee code lookup warning:', lookupErr);
+      }
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
-      email,
+      email: targetEmail,
       password,
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  // Update password for currently authenticated user
+  changePassword: async (newPassword) => {
+    if (!isSupabaseConfigured) throw new Error('Demo mode: Supabase not configured');
+    if (!newPassword || newPassword.length < 6) {
+      throw new Error('Password must be at least 6 characters.');
+    }
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  // Send password reset email
+  resetPasswordForEmail: async (emailOrLoginId) => {
+    if (!isSupabaseConfigured) throw new Error('Demo mode: Supabase not configured');
+    let email = emailOrLoginId?.trim() || '';
+
+    if (!email.includes('@')) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email')
+        .ilike('employee_code', email)
+        .maybeSingle();
+
+      if (profile?.email) {
+        email = profile.email;
+      }
+    }
+
+    const redirectUrl = `${window.location.origin}/reset-password`;
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl,
     });
     if (error) throw error;
     return data;
@@ -61,7 +119,7 @@ export const authService = {
         .maybeSingle();
 
       let { data: profile, error: profileError } = await query;
-      
+
       if (profileError && profileError.message && profileError.message.includes('default_in_time')) {
         const fallback = await supabase
           .from('profiles')

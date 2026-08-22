@@ -15,7 +15,7 @@ export function Employees() {
   const { addToast } = useToast();
   const { user } = useAuth();
   const isAdmin = (user?.profile?.role || user?.role || '').toLowerCase() === 'admin';
-  
+
   const [employeesList, setEmployeesList] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDept, setFilterDept] = useState('All');
@@ -45,8 +45,9 @@ export function Employees() {
 
   // Form state for new employee
   const [newEmployee, setNewEmployee] = useState({
-    firstName: '', lastName: '', position: '', department: '', inTime: '09:00', outTime: '17:30'
+    firstName: '', lastName: '', email: '', position: '', department: '', inTime: '09:00', outTime: '17:30'
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getStatusDisplay = (status) => {
     switch(status) {
@@ -58,13 +59,13 @@ export function Employees() {
   };
 
   const filteredEmployees = employeesList.filter(emp => {
-    const matchesSearch = 
-      (emp.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const matchesSearch =
+      (emp.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (emp.lastName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (emp.department || '').toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesDept = filterDept === 'All' || emp.department === filterDept;
-    
+
     return matchesSearch && matchesDept;
   });
 
@@ -72,65 +73,41 @@ export function Employees() {
 
   const handleAddEmployee = async (e) => {
     e.preventDefault();
-    if (!newEmployee.firstName || !newEmployee.lastName || !newEmployee.position || !newEmployee.department) {
+    if (!newEmployee.firstName.trim() || !newEmployee.lastName.trim() || !newEmployee.position.trim() || !newEmployee.department.trim()) {
       addToast('Please fill all required fields.', 'error');
       return;
     }
 
-    // Generate custom ID based on formula: [Company] + Initial + Initial + Year + Serial
     const companyName = localStorage.getItem('dayflow_company_name') || 'Odoo India';
-    const year = new Date().getFullYear();
-    const serial = employeesList.length + 1;
-    const newId = generateEmployeeId(companyName, newEmployee.firstName, newEmployee.lastName, year, serial);
+    const computedEmail = newEmployee.email.trim() || `${newEmployee.firstName.trim().toLowerCase()}.${newEmployee.lastName.trim().toLowerCase()}@dayflow.io`;
 
-    // Auto-generate password
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
-    let autoPassword = '';
-    for (let i = 0; i < 10; i++) {
-      autoPassword += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-
-    const empData = {
-      id: newId,
-      ...newEmployee,
-      status: 'Present',
-      avatarUrl: `https://i.pravatar.cc/150?u=${newId}`,
-      email: `${newEmployee.firstName.toLowerCase()}.${newEmployee.lastName.toLowerCase()}@dayflow.demo`,
-      phone: '+1 (555) 000-0000',
-      location: 'Remote',
-      joinDate: new Date().toISOString().split('T')[0],
-      manager: 'Not Assigned',
-      role: 'EMPLOYEE'
-    };
+    setIsSubmitting(true);
     try {
       addToast('Creating record in database...', 'info');
-      const { data, error } = await supabase.functions.invoke('create-employee', {
-        body: {
-          email: `${newEmployee.firstName.toLowerCase()}.${newEmployee.lastName.toLowerCase()}@dayflow.demo`,
-          password: autoPassword,
-          firstName: newEmployee.firstName,
-          lastName: newEmployee.lastName,
-          position: newEmployee.position,
-          department: newEmployee.department,
-          companyName: companyName,
-          serialNumber: serial,
-          defaultInTime: newEmployee.inTime,
-          defaultOutTime: newEmployee.outTime
-        }
+
+      const result = await employeeService.createEmployee({
+        email: computedEmail,
+        firstName: newEmployee.firstName.trim(),
+        lastName: newEmployee.lastName.trim(),
+        position: newEmployee.position.trim(),
+        department: newEmployee.department.trim(),
+        companyName: companyName,
+        defaultInTime: newEmployee.inTime || '09:00',
+        defaultOutTime: newEmployee.outTime || '17:30',
+        joinDate: new Date().toISOString().split('T')[0]
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      // Re-fetch to guarantee sync with DB
-      fetchEmployees();
+      // Re-fetch to guarantee live sync with Supabase DB
+      await fetchEmployees();
       setIsDrawerOpen(false);
-      setNewEmployee({ firstName: '', lastName: '', position: '', department: '', inTime: '09:00', outTime: '17:30' });
-      addToast(`Record Created! System Password: ${data?.generatedPassword || autoPassword}`, 'success');
+      setNewEmployee({ firstName: '', lastName: '', email: '', position: '', department: '', inTime: '09:00', outTime: '17:30' });
+      addToast(`Employee Created! Login ID: ${result?.employeeCode || 'Generated'} | Password: ${result?.generatedPassword || 'Set'}`, 'success');
 
     } catch (err) {
-      console.error("Backend Edge Function failed:", err);
+      console.error("Employee creation failed:", err);
       addToast(`Failed to create employee: ${err.message}`, 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -138,19 +115,19 @@ export function Employees() {
     <div className="roster-page">
       <header className="roster-header">
         {isAdmin && (
-          <button 
+          <button
             type="button"
-            className="btn-new-record" 
+            className="btn-new-record"
             onClick={() => setIsDrawerOpen(true)}
           >
             NEW
           </button>
         )}
-        
+
         <div className="roster-search-bar">
-          <input 
-            type="text" 
-            placeholder="Search" 
+          <input
+            type="text"
+            placeholder="Search"
             className="roster-search-input font-sans"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -172,8 +149,8 @@ export function Employees() {
       ) : (
         <div className="roster-grid">
           {filteredEmployees.map((emp, index) => (
-            <motion.div 
-              key={emp.id} 
+            <motion.div
+              key={emp.id}
               className="roster-card"
               onClick={() => navigate(`/employees/${emp.uuid || emp.id}`)}
               initial={{ opacity: 0, y: 10 }}
@@ -187,7 +164,7 @@ export function Employees() {
               <div className="roster-status-overlay">
                 {getStatusDisplay(emp.status)}
               </div>
-              
+
               <div className="roster-details">
                 <h3 className="roster-name">[{emp.firstName} {emp.lastName}]</h3>
               </div>
@@ -211,41 +188,59 @@ export function Employees() {
             <X size={20} />
           </button>
         </div>
-        
+
         <form className="drawer-body" onSubmit={handleAddEmployee}>
           <div className="form-group">
             <label className="form-label font-mono uppercase text-xs">First Name</label>
-            <input 
-              type="text" 
-              className="form-input" 
+            <input
+              type="text"
+              required
+              className="form-input"
               value={newEmployee.firstName}
               onChange={(e) => setNewEmployee({...newEmployee, firstName: e.target.value})}
+              placeholder="e.g. John"
             />
           </div>
-          
+
           <div className="form-group">
             <label className="form-label font-mono uppercase text-xs">Last Name</label>
-            <input 
-              type="text" 
-              className="form-input" 
+            <input
+              type="text"
+              required
+              className="form-input"
               value={newEmployee.lastName}
               onChange={(e) => setNewEmployee({...newEmployee, lastName: e.target.value})}
+              placeholder="e.g. Doe"
             />
           </div>
-          
+
+          <div className="form-group">
+            <label className="form-label font-mono uppercase text-xs">Corporate Email (Optional)</label>
+            <input
+              type="email"
+              className="form-input"
+              value={newEmployee.email}
+              onChange={(e) => setNewEmployee({...newEmployee, email: e.target.value})}
+              placeholder="Auto-generated if empty"
+            />
+          </div>
+
           <div className="form-group">
             <label className="form-label font-mono uppercase text-xs">Position</label>
-            <input 
-              type="text" 
-              className="form-input" 
+            <input
+              type="text"
+              required
+              className="form-input"
               value={newEmployee.position}
               onChange={(e) => setNewEmployee({...newEmployee, position: e.target.value})}
+              placeholder="e.g. Software Engineer"
             />
           </div>
-          
+
           <div className="form-group">
             <label className="form-label font-mono uppercase text-xs">Department</label>
-            <select 
+            <select
+              required
               className="form-input"
               value={newEmployee.department}
               onChange={(e) => setNewEmployee({...newEmployee, department: e.target.value})}
@@ -262,28 +257,39 @@ export function Employees() {
           <div className="grid-cols-2">
             <div className="form-group">
               <label className="form-label font-mono uppercase text-xs">Shift Start Time</label>
-              <input 
-                type="time" 
-                className="form-input font-mono" 
+              <input
+                type="time"
+                className="form-input font-mono"
                 value={newEmployee.inTime}
                 onChange={(e) => setNewEmployee({...newEmployee, inTime: e.target.value})}
               />
             </div>
-            
+
             <div className="form-group">
               <label className="form-label font-mono uppercase text-xs">Shift End Time</label>
-              <input 
-                type="time" 
-                className="form-input font-mono" 
+              <input
+                type="time"
+                className="form-input font-mono"
                 value={newEmployee.outTime}
                 onChange={(e) => setNewEmployee({...newEmployee, outTime: e.target.value})}
               />
             </div>
           </div>
-          
+
           <div className="drawer-footer mt-auto pt-6 border-t border-[var(--border-strong)]">
-            <button type="submit" className="btn-primary w-full py-3 justify-center">
-              Submit Record
+            <button
+              type="submit"
+              className="btn-primary w-full py-3 justify-center flex items-center gap-2"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>CREATING RECORD...</span>
+                </>
+              ) : (
+                'Submit Record'
+              )}
             </button>
           </div>
         </form>

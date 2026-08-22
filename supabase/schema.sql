@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
     join_date DATE NOT NULL DEFAULT CURRENT_DATE,
     avatar_url TEXT,
+    default_in_time TIME DEFAULT '09:00:00',
+    default_out_time TIME DEFAULT '17:30:00',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

@@ -5,32 +5,40 @@ import { Mail, Phone, MapPin, Briefcase, Calendar as CalendarIcon, Shield, Key }
 import './MyProfile.css';
 
 export function MyProfile() {
-  const { user } = useAuth();
+  const { user, changePassword } = useAuth();
   const { addToast } = useToast();
-  
+
   const [passwordForm, setPasswordForm] = useState({ current: '', new: '', confirm: '' });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  const handlePasswordChange = (e) => {
+  const handlePasswordChange = async (e) => {
     e.preventDefault();
     if (!passwordForm.new || !passwordForm.confirm) {
       addToast('Please fill out the new password fields.', 'error');
+      return;
+    }
+    if (passwordForm.new.length < 6) {
+      addToast('Password must be at least 6 characters.', 'error');
       return;
     }
     if (passwordForm.new !== passwordForm.confirm) {
       addToast('New passwords do not match.', 'error');
       return;
     }
-    
+
     setIsChangingPassword(true);
-    // Simulate API call for password change
-    setTimeout(() => {
-      addToast('Password successfully updated.', 'success');
+    try {
+      await changePassword(passwordForm.new);
+      addToast('Password successfully updated in Supabase Auth.', 'success');
       setPasswordForm({ current: '', new: '', confirm: '' });
+    } catch (err) {
+      console.error('Password change error:', err);
+      addToast(`Password Update Failed: ${err.message || 'Error updating password'}`, 'error');
+    } finally {
       setIsChangingPassword(false);
-    }, 1000);
+    }
   };
-  
+
   if (!user) return null;
 
   return (
@@ -39,7 +47,7 @@ export function MyProfile() {
         <h1 className="page-title font-serif">Operator Profile</h1>
         <p className="text-muted font-mono uppercase text-xs">Self-Service Access</p>
       </header>
-      
+
       <div className="profile-grid">
         <div className="profile-card identity-card">
           <div className="identity-header">
@@ -49,7 +57,7 @@ export function MyProfile() {
               <span className="badge badge-info mt-2">{user.position}</span>
             </div>
           </div>
-          
+
           <div className="identity-details mt-8">
             <div className="detail-row">
               <span className="detail-label font-mono text-xs uppercase text-muted"><Mail size={14} className="inline-icon"/> Comm</span>
@@ -68,7 +76,7 @@ export function MyProfile() {
 
         <div className="profile-card ops-card">
           <h3 className="section-title font-mono uppercase text-sm border-b pb-4 mb-4">Operational Status</h3>
-          
+
           <div className="ops-grid">
             <div className="ops-stat">
               <span className="ops-label text-muted"><Briefcase size={16} className="mb-2"/> Department</span>
@@ -83,16 +91,16 @@ export function MyProfile() {
               <span className="ops-value font-mono">{user.role}</span>
             </div>
           </div>
-          
+
           <div className="mt-8 border-t pt-6" style={{ borderColor: 'var(--border-strong)'}}>
             <h4 className="font-mono uppercase text-xs text-muted mb-4">Security Settings</h4>
-            
+
             <form onSubmit={handlePasswordChange} className="password-change-form">
               <div className="form-group mb-3">
                 <label className="form-label font-mono text-[10px] uppercase text-muted">Current Password</label>
-                <input 
-                  type="password" 
-                  className="form-input text-sm p-2" 
+                <input
+                  type="password"
+                  className="form-input text-sm p-2"
                   value={passwordForm.current}
                   onChange={(e) => setPasswordForm({...passwordForm, current: e.target.value})}
                   placeholder="••••••••"
@@ -100,9 +108,9 @@ export function MyProfile() {
               </div>
               <div className="form-group mb-3">
                 <label className="form-label font-mono text-[10px] uppercase text-muted">New Password</label>
-                <input 
-                  type="password" 
-                  className="form-input text-sm p-2" 
+                <input
+                  type="password"
+                  className="form-input text-sm p-2"
                   value={passwordForm.new}
                   onChange={(e) => setPasswordForm({...passwordForm, new: e.target.value})}
                   placeholder="••••••••"
@@ -110,16 +118,16 @@ export function MyProfile() {
               </div>
               <div className="form-group mb-4">
                 <label className="form-label font-mono text-[10px] uppercase text-muted">Confirm New Password</label>
-                <input 
-                  type="password" 
-                  className="form-input text-sm p-2" 
+                <input
+                  type="password"
+                  className="form-input text-sm p-2"
                   value={passwordForm.confirm}
                   onChange={(e) => setPasswordForm({...passwordForm, confirm: e.target.value})}
                   placeholder="••••••••"
                 />
               </div>
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className="btn-secondary w-full py-2 text-xs"
                 disabled={isChangingPassword}
               >

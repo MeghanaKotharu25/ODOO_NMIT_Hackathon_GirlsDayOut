@@ -105,5 +105,35 @@ export const employeeService = {
       avatarUrl: profile.avatar_url || `https://i.pravatar.cc/150?u=${profile.employee_code || profile.id}`,
       role: profile.role ? profile.role.toUpperCase() : 'EMPLOYEE'
     };
+  },
+
+  // Create a new employee via Supabase backend Edge Function (HR/Admin only)
+  createEmployee: async (employeeData) => {
+    if (!isSupabaseConfigured) {
+      throw new Error('Database Error: Supabase is not configured.');
+    }
+
+    const { data, error } = await supabase.functions.invoke('create-employee', {
+      body: employeeData,
+    });
+
+    if (error) {
+      console.error('Edge Function invocation error:', error);
+      let errorMsg = error.message;
+      if (errorMsg.includes('Failed to send a request to the Edge Function') || errorMsg.includes('FunctionsFetchError')) {
+        errorMsg = 'Failed to connect to Edge Function. Please verify Edge Function deployment and network connection.';
+      }
+      throw new Error(errorMsg);
+    }
+
+    if (!data) {
+      throw new Error('Empty response received from backend service.');
+    }
+
+    if (data.success === false || data.error) {
+      throw new Error(data.error || 'Failed to create employee record.');
+    }
+
+    return data;
   }
 };
