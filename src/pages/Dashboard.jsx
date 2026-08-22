@@ -1,25 +1,54 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer
 } from 'recharts';
-import { ArrowUpRight, ArrowDownRight, Clock, AlertTriangle } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Clock, AlertTriangle, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { staggerContainer, staggerItem, drawLine, transitionSnappy } from '../utils/motion';
 import { Magnetic } from '../components/layout/Magnetic';
+import { supabase } from '../lib/supabase';
 import './Dashboard.css';
-
-const attendanceData = [
-  { name: 'Mon', present: 110, absent: 5, leave: 13 },
-  { name: 'Tue', present: 115, absent: 3, leave: 10 },
-  { name: 'Wed', present: 112, absent: 4, leave: 12 },
-  { name: 'Thu', present: 108, absent: 8, leave: 12 },
-  { name: 'Fri', present: 105, absent: 10, leave: 13 },
-];
 
 export function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  
+  const [attendanceData, setAttendanceData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAttendance = async () => {
+      setIsLoading(true);
+      // Fetch attendance for the past week
+      const { data, error } = await supabase.from('attendance').select('date, status');
+      
+      if (!error && data && data.length > 0) {
+        // Aggregate data by day of week
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const aggregated = {};
+        
+        data.forEach(record => {
+          const date = new Date(record.date);
+          const dayName = days[date.getDay()];
+          if (!aggregated[dayName]) {
+            aggregated[dayName] = { name: dayName, present: 0, absent: 0, leave: 0 };
+          }
+          if (record.status === 'present') aggregated[dayName].present += 1;
+          if (record.status === 'absent') aggregated[dayName].absent += 1;
+          if (record.status === 'leave') aggregated[dayName].leave += 1;
+        });
+        
+        setAttendanceData(Object.values(aggregated));
+      } else {
+        setAttendanceData([]);
+      }
+      setIsLoading(false);
+    };
+    
+    fetchAttendance();
+  }, []);
   
   const currentDate = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
