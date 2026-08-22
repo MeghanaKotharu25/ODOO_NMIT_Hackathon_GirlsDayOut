@@ -32,20 +32,20 @@ export function Startup() {
           </h2>
         </div>
 
-        <h1 
-          className="text-6xl md:text-8xl font-serif mb-8 glitch-text font-bold tracking-tighter" 
+        <h1
+          className="text-6xl md:text-8xl font-serif mb-8 glitch-text font-bold tracking-tighter"
           data-text="DAYFLOW HRMS"
         >
           DAYFLOW HRMS
         </h1>
 
         <p className="text-lg md:text-xl text-secondary mb-12 font-mono max-w-2xl leading-relaxed">
-          A sophisticated, cinematic environment for managing human capital. 
+          A sophisticated, cinematic environment for managing human capital.
           Enter the portal to orchestrate operations with precision.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-6 mt-4 w-full justify-center">
-          <Link 
+          <Link
             to="/login"
             className="group relative inline-flex items-center justify-center px-8 py-4 font-mono font-medium text-white bg-black border border-black overflow-hidden transition-all hover:bg-transparent hover:text-black"
           >
@@ -55,8 +55,8 @@ export function Startup() {
               <ArrowRight size={18} className="transform group-hover:translate-x-1 transition-transform" />
             </span>
           </Link>
-          
-          <Link 
+
+          <Link
             to="/register"
             className="group relative inline-flex items-center justify-center px-8 py-4 font-mono font-medium text-black bg-transparent border border-strong hover:border-black transition-colors"
           >

@@ -14,87 +14,213 @@ serve(async (req) => {
   }
 
   try {
-    // 1. Initialize Supabase Client with SERVICE_ROLE key to bypass RLS
-    // This allows us to create users without logging the current admin out!
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    )
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 
-    // 2. Parse request body
-    const { email, firstName, lastName, position, department, companyName, serialNumber, defaultInTime, defaultOutTime } = await req.json()
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Server configuration error: Supabase environment variables not set.' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      )
+    }
+
+    // 1. Initialize Supabase Admin Client with SERVICE_ROLE key
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    })
+
+    // 2. Validate Authenticated Caller (HR/Admin check)
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized: Missing authorization header.' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      )
+    }
+
+    const token = authHeader.replace('Bearer ', '').trim()
+    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token)
+
+    if (userError || !userData?.user) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized: Invalid or expired authentication session.' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      )
+    }
+
+    // Verify caller role in public.profiles table
+    const { data: callerProfile, error: profileCheckError } = await supabaseAdmin
+      .from('profiles')
+      .select('role, status')
+      .eq('id', userData.user.id)
+      .maybeSingle()
+
+    const callerRole = (callerProfile?.role || '').toLowerCase()
+    if (callerRole !== 'admin') {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Forbidden: Only HR / Admin accounts are authorized to create employees.' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      )
+    }
+
+    // 3. Parse and validate request body
+    const body = await req.json()
+    const {
+      email,
+      firstName,
+      lastName = '',
+      position = 'Employee',
+      department = 'General',
+      companyName = 'Odoo India',
+      defaultInTime = '09:00',
+      defaultOutTime = '17:30',
+      joinDate
+    } = body
 
     if (!email || !firstName) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields.' }),
+        JSON.stringify({ success: false, error: 'Validation Error: Email and First Name are required.' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
 
-    // Auto-generate secure password
+    const normalizedEmail = email.trim().toLowerCase()
+    const cleanFirstName = firstName.trim()
+    const cleanLastName = lastName.trim()
+
+    // 4. Generate unique Login ID following the required format:
+    // Format: OI + first2(first name) + first2(last name) + YYYY + 4-digit yearly serial number
+    // Example: John Doe joining in 2022 -> OIJODO20220001
+    const companyPrefix = (companyName || 'Odoo India')
+      .replace(/[^a-zA-Z]/g, '')
+      .substring(0, 2)
+      .toUpperCase()
+      .padEnd(2, 'O')
+
+    const firstTwoLetters = cleanFirstName
+      .replace(/[^a-zA-Z]/g, '')
+      .substring(0, 2)
+      .toUpperCase()
+      .padEnd(2, 'X')
+
+    const lastTwoLetters = cleanLastName
+      .replace(/[^a-zA-Z]/g, '')
+      .substring(0, 2)
+      .toUpperCase()
+      .padEnd(2, 'X')
+
+    const currentYear = joinDate ? new Date(joinDate).getFullYear() : new Date().getFullYear()
+    const idPrefix = `${companyPrefix}${firstTwoLetters}${lastTwoLetters}${currentYear}`
+
+    // Query profiles in database to compute the next available serial number safely
+    const { data: existingCodes, error: codeQueryError } = await supabaseAdmin
+      .from('profiles')
+      .select('employee_code')
+      .ilike('employee_code', `${idPrefix}%`)
+
+    let nextSerial = 1
+    if (existingCodes && existingCodes.length > 0) {
+      const serialNumbers = existingCodes.map(row => {
+        const serialPart = row.employee_code?.replace(idPrefix, '') || ''
+        const num = parseInt(serialPart, 10)
+        return isNaN(num) ? 0 : num
+      })
+      nextSerial = Math.max(...serialNumbers, 0) + 1
+    }
+
+    const formattedSerial = String(nextSerial).padStart(4, '0')
+    const employeeCode = `${idPrefix}${formattedSerial}`
+
+    // 5. Generate secure initial password
     const generatePassword = () => {
-      const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
-      let password = "";
-      for (let i = 0; i < 12; i++) {
-        password += chars.charAt(Math.floor(Math.random() * chars.length));
+      const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%";
+      let pwd = "";
+      for (let i = 0; i < 10; i++) {
+        pwd += chars.charAt(Math.floor(Math.random() * chars.length));
       }
-      return password + "1aA!"; // Ensure complexity requirements are met
+      return pwd + "1aA!";
     };
-    
-    const generatedPassword = generatePassword();
+    const generatedPassword = body.password || generatePassword()
 
-    // 3. Generate ID (Logic mirrored from frontend idGenerator.js)
-    // Extract Initials
-    const compInitials = (companyName || 'Odoo India').split(' ').map((w: string) => w[0]).join('').substring(0, 2).toUpperCase()
-    const nameInitials = (firstName.substring(0, 2) + (lastName || 'X').substring(0, 2)).toUpperCase().padEnd(4, 'X')
-    const year = new Date().getFullYear()
-    const serial = String(serialNumber || 1).padStart(4, '0')
-    
-    const employeeCode = `${compInitials}${nameInitials}${year}${serial}`
-
-    // 4. Create the user in Auth system
+    // 6. Create Auth User in Supabase Auth
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email,
+      email: normalizedEmail,
       password: generatedPassword,
-      email_confirm: true, // Auto confirm for admin-created accounts
+      email_confirm: true,
       user_metadata: {
-        first_name: firstName,
-        last_name: lastName,
+        first_name: cleanFirstName,
+        last_name: cleanLastName,
+        full_name: `${cleanFirstName} ${cleanLastName}`.trim(),
+        employee_code: employeeCode,
+        role: 'employee'
       }
     })
 
-    if (authError) throw authError
+    if (authError) {
+      return new Response(
+        JSON.stringify({ success: false, error: `Auth Creation Error: ${authError.message}` }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
 
-    // 5. Explicitly update the profile table to set the correct employee_code
-    // (Our Postgres trigger creates the profile, but we need to update the auto-generated code to our custom one)
+    const newUserId = authData.user.id
+    const inTimeFormatted = defaultInTime.length === 5 ? `${defaultInTime}:00` : defaultInTime
+    const outTimeFormatted = defaultOutTime.length === 5 ? `${defaultOutTime}:00` : defaultOutTime
+
+    // 7. Upsert/Update profile record
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .update({
+      .upsert({
+        id: newUserId,
         employee_code: employeeCode,
+        first_name: cleanFirstName,
+        last_name: cleanLastName,
+        email: normalizedEmail,
         position,
         department,
-        default_in_time: defaultInTime ? `${defaultInTime}:00` : '09:00:00',
-        default_out_time: defaultOutTime ? `${defaultOutTime}:00` : '17:30:00',
-      })
-      .eq('id', authData.user.id)
+        role: 'employee',
+        status: 'active',
+        join_date: joinDate || new Date().toISOString().split('T')[0],
+        default_in_time: inTimeFormatted,
+        default_out_time: outTimeFormatted,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' })
 
-    if (profileError) throw profileError
+    if (profileError) {
+      console.error('Profile update error:', profileError)
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Database Profile Error: ${profileError.message}`
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
+        success: true,
         message: 'Employee successfully created.',
         employeeCode,
         generatedPassword,
-        user: authData.user 
+        user: {
+          id: newUserId,
+          email: normalizedEmail,
+          employeeCode,
+          firstName: cleanFirstName,
+          lastName: cleanLastName,
+          position,
+          department
+        }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
 
   } catch (error) {
+    console.error('Unhandled Edge Function exception:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      JSON.stringify({ success: false, error: error.message || 'Internal Server Error' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }
 })

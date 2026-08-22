@@ -14,6 +14,7 @@ import AdminAttendance from './pages/admin/attendance/Attendance';
 import { TimeOff } from './pages/TimeOff';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
+import { ResetPassword } from './pages/ResetPassword';
 import { LoadingScreen } from './pages/LoadingScreen';
 import { MyProfile } from './pages/MyProfile';
 import { Settings } from './pages/Settings';
@@ -29,8 +30,20 @@ function App() {
         {/* Unprotected Public Routes */}
         <Route path="/welcome" element={<Startup />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/loading" element={<LoadingScreen />} />
+
+        {/* Admin-only Registration Route */}
+        <Route
+          path="/register"
+          element={
+            <ProtectedRoute>
+              <RoleProtectedRoute role="admin">
+                <Register />
+              </RoleProtectedRoute>
+            </ProtectedRoute>
+          }
+        />
 
         {/* Protected Routes Wrapper */}
         <Route
