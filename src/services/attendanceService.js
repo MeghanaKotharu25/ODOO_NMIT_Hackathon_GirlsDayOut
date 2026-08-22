@@ -149,16 +149,31 @@ export const attendanceService = {
 
   getAdminAttendance: async (date = attendanceService.getLocalDate()) => {
     if (!isSupabaseConfigured) return [];
-    const [{ data: profiles, error: profilesError }, { data: attendance, error: attendanceError }] = await Promise.all([
-      supabase
-        .from('profiles')
-        .select('id, employee_code, first_name, last_name, email, department, position, default_in_time, default_out_time')
-        .order('employee_code', { ascending: true }),
+    
+    let profilesPromise = supabase
+      .from('profiles')
+      .select('id, employee_code, first_name, last_name, email, department, position, default_in_time, default_out_time')
+      .order('employee_code', { ascending: true });
+      
+    let [{ data: profiles, error: profilesError }, { data: attendance, error: attendanceError }] = await Promise.all([
+      profilesPromise,
       supabase
         .from('attendance')
         .select('id, employee_id, date, check_in, check_out, status, work_hours')
         .eq('date', date),
     ]);
+    
+    // Fallback if schema is not migrated
+    if (profilesError && profilesError.message && profilesError.message.includes('default_in_time')) {
+      console.warn('Database not migrated with default_in_time. Falling back to old schema.');
+      const fallbackResult = await supabase
+        .from('profiles')
+        .select('id, employee_code, first_name, last_name, email, department, position')
+        .order('employee_code', { ascending: true });
+      profiles = fallbackResult.data;
+      profilesError = fallbackResult.error;
+    }
+
     if (profilesError) throw profilesError;
     if (attendanceError) throw attendanceError;
 
