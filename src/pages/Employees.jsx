@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, X, Loader2 } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Magnetic } from '../components/layout/Magnetic';
 import { useToast } from '../context/ToastContext';
-import { supabase } from '../lib/supabase';
+import { mockEmployees } from '../data/mockData';
 import { generateEmployeeId } from '../utils/idGenerator';
 import './Employees.css';
 
@@ -12,8 +12,7 @@ export function Employees() {
   const navigate = useNavigate();
   const { addToast } = useToast();
   
-  const [employeesList, setEmployeesList] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [employeesList, setEmployeesList] = useState(mockEmployees);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDept, setFilterDept] = useState('All');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -23,31 +22,7 @@ export function Employees() {
     firstName: '', lastName: '', position: '', department: ''
   });
 
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      setIsLoading(true);
-      const { data, error } = await supabase.from('profiles').select('*');
-      if (error) {
-        console.error('Error fetching employees:', error);
-        addToast('Failed to load employee directory.', 'error');
-      } else {
-        // Map database fields to frontend camelCase expectations
-        const mappedData = data.map(emp => ({
-          id: emp.employee_code,
-          firstName: emp.first_name,
-          lastName: emp.last_name,
-          position: emp.position,
-          department: emp.department,
-          status: emp.status === 'active' ? 'Present' : 'Absent',
-          avatarUrl: emp.avatar_url || `https://i.pravatar.cc/150?u=${emp.employee_code}`,
-          email: emp.email
-        }));
-        setEmployeesList(mappedData);
-      }
-      setIsLoading(false);
-    };
-    fetchEmployees();
-  }, [addToast]);
+
   
   const getStatusDisplay = (status) => {
     switch(status) {
@@ -150,13 +125,7 @@ export function Employees() {
         </div>
       </header>
 
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-500">
-          <Loader2 className="w-8 h-8 animate-spin mb-4" />
-          <p className="font-mono text-sm uppercase tracking-widest">Syncing Registry...</p>
-        </div>
-      ) : (
-        <div className="roster-grid">
+      <div className="roster-grid">
           {filteredEmployees.map((emp, index) => (
             <motion.div 
               key={emp.id} 
@@ -194,7 +163,6 @@ export function Employees() {
             </div>
           )}
         </div>
-      )}
 
       {/* Add Employee Drawer */}
       <div className={`drawer-overlay ${isDrawerOpen ? 'open' : ''}`} onClick={() => setIsDrawerOpen(false)}></div>
