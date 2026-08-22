@@ -26,7 +26,7 @@ export function Login() {
   // Redirect if already authenticated
   useEffect(() => {
     if (user && !authLoading) {
-      navigate('/', { replace: true });
+      navigate('/employees', { replace: true });
     }
   }, [user, authLoading, navigate]);
 
@@ -50,11 +50,13 @@ export function Login() {
         return;
       }
 
-      navigate('/', { replace: true });
+      navigate('/employees', { replace: true });
     } catch (err) {
-      console.error('Login error:', err);
+      console.error('Login error details:', err);
       const msg = err.message || '';
-      if (msg.toLowerCase().includes('invalid login credentials')) {
+      if (msg.toLowerCase().includes('failed to fetch') || err.name === 'TypeError') {
+        setErrorMessage(`Network Error: Unable to reach Supabase server (${msg || 'Failed to fetch'}). Please check internet/DNS.`);
+      } else if (msg.toLowerCase().includes('invalid login credentials')) {
         setErrorMessage('Invalid email or password. Please check your credentials.');
       } else {
         setErrorMessage(msg || 'An unexpected error occurred during login.');
@@ -95,7 +97,7 @@ export function Login() {
       if (data.session === null) {
         setErrorMessage('Registration successful! Please check your email to confirm your account.');
       } else {
-        navigate('/', { replace: true });
+        navigate('/employees', { replace: true });
       }
     } catch (err) {
       console.error('Signup error:', err);

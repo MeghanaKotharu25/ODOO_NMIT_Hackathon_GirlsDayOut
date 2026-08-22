@@ -80,6 +80,14 @@ Created 9 application tables with explicit foreign key cascades (`ON DELETE CASC
 - **Created `scripts/provision-auth-users.js`**: Server-side Node.js admin provisioning script utilizing `SUPABASE_SERVICE_ROLE_KEY` (kept strictly in local process environment, never exposed to browser or committed to Git).
 - **Implemented `src/services/employeeService.js`**: Queries `public.profiles` and `public.attendance` directly, returning structured employee objects and throwing explicit database error instances on query failure.
 
+### Phase 9: Registration Flow & UI Polish
+- **Company Registration**: Implemented `Register.jsx` to handle initial Admin/Company setup with a visually striking dark UI and logo upload preview.
+- **Login Terminal Updates**: Realigned `Login.jsx` labels (Login Id/Email) and integrated the "Sign Up" navigation link.
+- **Role-Based Provisioning**: Restructured `Employees.jsx` to conditionally render the "Add Record" button strictly for authenticated Admin users, preventing employee privilege escalation.
+- **Auto-Generated Passwords**: Integrated a secure frontend-driven temporary password generator (10 characters alphanumeric) upon employee creation to comply with business rules.
+- **Self-Service Security**: Implemented "Change Password" functionality within `MyProfile.jsx` allowing users to overwrite system-generated passwords securely.
+- **UI Refinements**: Removed conflicting CSS double borders in `TopBar` and `Dashboard`, resolved a responsive layout conflict with the `Search` component, and unified the primary accent color to a striking `#A855F7` (Purple).
+
 ---
 
 ## 4. Verification & Validation Summary

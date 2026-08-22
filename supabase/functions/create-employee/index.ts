@@ -23,14 +23,26 @@ serve(async (req) => {
     )
 
     // 2. Parse request body
-    const { email, password, firstName, lastName, position, department, companyName, serialNumber } = await req.json()
+    const { email, firstName, lastName, position, department, companyName, serialNumber } = await req.json()
 
-    if (!email || !password || !firstName) {
+    if (!email || !firstName) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields.' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
+
+    // Auto-generate secure password
+    const generatePassword = () => {
+      const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+      let password = "";
+      for (let i = 0; i < 12; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return password + "1aA!"; // Ensure complexity requirements are met
+    };
+    
+    const generatedPassword = generatePassword();
 
     // 3. Generate ID (Logic mirrored from frontend idGenerator.js)
     // Extract Initials
@@ -44,7 +56,7 @@ serve(async (req) => {
     // 4. Create the user in Auth system
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
-      password,
+      password: generatedPassword,
       email_confirm: true, // Auto confirm for admin-created accounts
       user_metadata: {
         first_name: firstName,
@@ -71,6 +83,7 @@ serve(async (req) => {
       JSON.stringify({ 
         message: 'Employee successfully created.',
         employeeCode,
+        generatedPassword,
         user: authData.user 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }

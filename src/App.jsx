@@ -14,6 +14,7 @@ import AdminAttendance from './pages/admin/attendance/Attendance';
 import { TimeOff } from './pages/TimeOff';
 import { Payroll } from './pages/Payroll';
 import { Login } from './pages/Login';
+import { Register } from './pages/Register';
 import { LoadingScreen } from './pages/LoadingScreen';
 import { MyProfile } from './pages/MyProfile';
 import { Settings } from './pages/Settings';
@@ -27,6 +28,7 @@ function App() {
       <Routes>
         {/* Unprotected Public Routes */}
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/loading" element={<LoadingScreen />} />
 
         {/* Protected Routes Wrapper */}

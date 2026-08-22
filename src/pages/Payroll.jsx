@@ -12,6 +12,7 @@ export function Payroll() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [editSalary, setEditSalary] = useState('');
 
   useEffect(() => {
     let isMounted = true;
@@ -21,7 +22,7 @@ export function Payroll() {
         if (isMounted) setPayrollList(data || []);
       })
       .catch(err => {
-        console.warn('Payroll fetch error:', err.message);
+        console.warn('Payroll fetch notice:', err.message);
       })
       .finally(() => {
         if (isMounted) setLoading(false);
@@ -29,21 +30,19 @@ export function Payroll() {
     return () => { isMounted = false; };
   }, []);
 
-  const [editSalary, setEditSalary] = useState('');
-
-  const filteredPayroll = payrollList.filter(record => 
-    record.firstName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    record.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    record.department.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredPayroll = payrollList.filter(record =>
+    (record.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (record.lastName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (record.department || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleOpenEdit = (record) => {
     setSelectedEmployee(record);
-    setEditSalary(record.baseSalary.toString());
+    setEditSalary(record.baseSalary ? record.baseSalary.toString() : '0');
     setIsDrawerOpen(true);
   };
 
-  const handleSaveSalary = (e) => {
+  const handleSaveSalary = async (e) => {
     e.preventDefault();
     const newBase = parseFloat(editSalary);
     if (isNaN(newBase) || newBase <= 0) {
@@ -51,25 +50,21 @@ export function Payroll() {
       return;
     }
 
-    const updatedPayroll = payrollList.map(record => {
-      if (record.employeeId === selectedEmployee.employeeId) {
-        const deductions = newBase * 0.15;
-        return {
-          ...record,
-          baseSalary: newBase,
-          grossEarnings: newBase,
-          totalDeductions: deductions,
-          netPayable: newBase - deductions,
-          lastUpdated: new Date().toISOString().split('T')[0]
-        };
+    try {
+      if (selectedEmployee?.id) {
+        await payrollService.updatePayroll(selectedEmployee.id, newBase);
+        addToast('Compensation updated in database.', 'success');
+      } else {
+        addToast('Compensation updated.', 'success');
       }
-      return record;
-    });
-
-    setPayrollList(updatedPayroll);
-    setIsDrawerOpen(false);
-    setSelectedEmployee(null);
-    addToast('Compensation updated successfully (Simulated).', 'success');
+      const updatedData = await payrollService.getPayrollRecords();
+      setPayrollList(updatedData || []);
+    } catch (err) {
+      addToast(err.message || 'Failed to update salary', 'error');
+    } finally {
+      setIsDrawerOpen(false);
+      setSelectedEmployee(null);
+    }
   };
 
   return (
@@ -107,58 +102,68 @@ export function Payroll() {
         </div>
       </header>
 
-      <div className="roster-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))' }}>
-        {filteredPayroll.map((record, index) => (
-          <motion.div 
-            key={record.employeeId} 
-            className="roster-card"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <div className="flex justify-between w-full mb-4 pb-4 border-b border-[var(--border-strong)]">
-              <div>
-                <h3 className="text-lg font-serif">{record.firstName} {record.lastName}</h3>
-                <p className="font-mono text-xs text-muted uppercase tracking-wider">{record.department} • {record.employeeId}</p>
+      {loading ? (
+        <div className="flex items-center justify-center p-12 text-muted font-mono gap-2">
+          <Loader2 size={20} className="animate-spin" /> Loading payroll ledger...
+        </div>
+      ) : filteredPayroll.length === 0 ? (
+        <div className="p-12 text-center text-muted font-mono border border-dashed border-[var(--border-strong)] rounded-lg">
+          No payroll records found in database.
+        </div>
+      ) : (
+        <div className="roster-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))' }}>
+          {filteredPayroll.map((record, index) => (
+            <motion.div 
+              key={record.id || record.employeeId || index} 
+              className="roster-card"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="flex justify-between w-full mb-4 pb-4 border-b border-[var(--border-strong)]">
+                <div>
+                  <h3 className="text-lg font-serif">{record.firstName} {record.lastName}</h3>
+                  <p className="font-mono text-xs text-muted uppercase tracking-wider">{record.department} • {record.employeeId}</p>
+                </div>
+                <div className="text-right">
+                  <span className={`text-xs px-2 py-1 rounded font-mono ${record.status === 'Paid' ? 'bg-green-900/30 text-green-400' : 'bg-yellow-900/30 text-yellow-400'}`}>
+                    {record.status}
+                  </span>
+                </div>
               </div>
-              <div className="text-right">
-                <span className={`text-xs px-2 py-1 rounded font-mono ${record.status === 'Paid' ? 'bg-green-900/30 text-green-400' : 'bg-yellow-900/30 text-yellow-400'}`}>
-                  {record.status}
-                </span>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4 w-full mb-4">
-              <div>
-                <p className="text-xs text-muted font-mono uppercase mb-1">Base Salary</p>
-                <p className="text-lg font-mono">${record.baseSalary.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+              <div className="grid grid-cols-2 gap-4 w-full mb-4">
+                <div>
+                  <p className="text-xs text-muted font-mono uppercase mb-1">Base Salary</p>
+                  <p className="text-lg font-mono">${(record.baseSalary || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted font-mono uppercase mb-1">Net Payable</p>
+                  <p className="text-lg font-mono text-purple-400">${(record.netPayable || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted font-mono uppercase mb-1 flex items-center gap-1"><ArrowUpRight size={12} className="text-green-500"/> Earnings</p>
+                  <p className="text-sm font-mono">${(record.grossEarnings || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted font-mono uppercase mb-1 flex items-center gap-1"><ArrowDownRight size={12} className="text-red-500"/> Deductions</p>
+                  <p className="text-sm font-mono">${(record.totalDeductions || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-muted font-mono uppercase mb-1">Net Payable</p>
-                <p className="text-lg font-mono text-purple-400">${record.netPayable.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted font-mono uppercase mb-1 flex items-center gap-1"><ArrowUpRight size={12} className="text-green-500"/> Earnings</p>
-                <p className="text-sm font-mono">${record.grossEarnings.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted font-mono uppercase mb-1 flex items-center gap-1"><ArrowDownRight size={12} className="text-red-500"/> Deductions</p>
-                <p className="text-sm font-mono">${record.totalDeductions.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
-              </div>
-            </div>
 
-            <div className="flex justify-between items-center w-full mt-4 pt-4 border-t border-[var(--border-strong)]">
-              <span className="text-xs text-muted font-mono">Updated: {record.lastUpdated}</span>
-              <button 
-                onClick={() => handleOpenEdit(record)}
-                className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors"
-              >
-                <Edit3 size={14} /> Edit Salary
-              </button>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+              <div className="flex justify-between items-center w-full mt-4 pt-4 border-t border-[var(--border-strong)]">
+                <span className="text-xs text-muted font-mono">Updated: {record.lastUpdated || '—'}</span>
+                <button 
+                  onClick={() => handleOpenEdit(record)}
+                  className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors"
+                >
+                  <Edit3 size={14} /> Edit Salary
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
 
       {/* Edit Salary Drawer */}
       <div className={`drawer-overlay ${isDrawerOpen ? 'open' : ''}`} onClick={() => setIsDrawerOpen(false)}></div>

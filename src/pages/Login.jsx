@@ -28,7 +28,12 @@ export function Login() {
       navigate('/loading');
     } catch (err) {
       console.error('Login error:', err);
-      addToast(err.message || 'Authentication failed.', 'error');
+      const msg = err.message || '';
+      if (msg.toLowerCase().includes('failed to fetch') || err.name === 'TypeError') {
+        addToast(`Network Error: Unable to connect to Supabase (${msg || 'Failed to fetch'}). Check DNS/Internet.`, 'error');
+      } else {
+        addToast(msg || 'Authentication failed.', 'error');
+      }
       setIsSubmitting(false);
     }
   };
@@ -48,7 +53,7 @@ export function Login() {
         
         <form className="login-form" onSubmit={handleLogin}>
           <div className="form-group">
-            <label className="form-label font-mono uppercase text-xs">Operator ID / Email</label>
+            <label className="form-label font-mono uppercase text-xs">Login Id/Email :-</label>
             <input 
               type="text" 
               className="form-input" 
@@ -59,7 +64,7 @@ export function Login() {
           </div>
           
           <div className="form-group">
-            <label className="form-label font-mono uppercase text-xs">Passcode</label>
+            <label className="form-label font-mono uppercase text-xs">Password :-</label>
             <input 
               type="password" 
               className="form-input" 
@@ -74,8 +79,36 @@ export function Login() {
             className="btn-primary login-btn mt-4 w-full justify-center py-4"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Authenticating...' : 'Initialize Session'}
+            {isSubmitting ? 'SIGNING IN...' : 'SIGN IN'}
           </button>
+          
+          <div className="demo-logins" style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', textAlign: 'center', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Demo Access</div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button 
+                type="button" 
+                className="btn-secondary"
+                style={{ flex: 1, padding: '0.5rem', fontSize: '0.75rem' }}
+                onClick={() => { setEmail('elena.r@dayflow.io'); setPassword('Password123!'); }}
+              >
+                HR/Admin
+              </button>
+              <button 
+                type="button" 
+                className="btn-secondary"
+                style={{ flex: 1, padding: '0.5rem', fontSize: '0.75rem' }}
+                onClick={() => { setEmail('sarah.chen@dayflow.io'); setPassword('Password123!'); }}
+              >
+                Employee
+              </button>
+            </div>
+          </div>
+
+          <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/register'); }} style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+              Don't have an Account? <span style={{ color: 'var(--text-primary)' }}>Sign Up</span>
+            </a>
+          </div>
         </form>
         
         <div className="login-footer">

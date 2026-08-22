@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
 import { LogIn, LogOut } from 'lucide-react';
+import { attendanceService } from '../services/attendanceService';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import './Attendance.css';
 
-const attendanceLog = [
-  { id: 1, date: '2024-10-24', checkIn: '08:58 AM', checkOut: '--', status: 'Present', hours: '--' },
-  { id: 2, date: '2024-10-23', checkIn: '09:02 AM', checkOut: '05:30 PM', status: 'Present', hours: '8h 28m' },
-  { id: 3, date: '2024-10-22', checkIn: '08:55 AM', checkOut: '05:15 PM', status: 'Present', hours: '8h 20m' },
-  { id: 4, date: '2024-10-21', checkIn: '09:10 AM', checkOut: '06:00 PM', status: 'Late', hours: '8h 50m' },
-  { id: 5, date: '2024-10-18', checkIn: '--', checkOut: '--', status: 'Absent', hours: '--' },
-  { id: 6, date: '2024-10-17', checkIn: '09:05 AM', checkOut: '01:00 PM', status: 'Half-day', hours: '4h 00m' },
-];
-
 export function Attendance() {
+  const { user } = useAuth();
+  const { addToast } = useToast();
+
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [dbError, setDbError] = useState(null);
   const [checkInTime, setCheckInTime] = useState(null);
   const [checkOutTime, setCheckOutTime] = useState(null);
 
@@ -20,6 +20,32 @@ export function Attendance() {
     const clock = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(clock);
   }, []);
+
+  const loadAttendance = async () => {
+    setLoading(true);
+    try {
+      const userUuid = user?.id || user?.uuid || null;
+      const records = await attendanceService.getAttendance(userUuid);
+      setAttendanceRecords(records);
+      setDbError(null);
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      const todayRecord = records.find(r => r.date === todayStr);
+      if (todayRecord) {
+        if (todayRecord.rawCheckIn) setCheckInTime(new Date(todayRecord.rawCheckIn));
+        if (todayRecord.rawCheckOut) setCheckOutTime(new Date(todayRecord.rawCheckOut));
+      }
+    } catch (err) {
+      console.warn('Attendance fetch notice:', err.message);
+      setDbError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadAttendance();
+  }, [user]);
 
   const formatTime = (date) => {
     if (!date) return '--';
@@ -32,12 +58,41 @@ export function Attendance() {
     return `${Math.floor(totalMinutes / 60)}h ${String(totalMinutes % 60).padStart(2, '0')}m`;
   };
 
-  const handleCheckIn = () => {
-    setCheckInTime(new Date());
+  const handleCheckIn = async () => {
+    const now = new Date();
+    setCheckInTime(now);
     setCheckOutTime(null);
+    const userUuid = user?.id || user?.uuid;
+    if (userUuid) {
+      try {
+        await attendanceService.checkIn(userUuid);
+        if (addToast) addToast('Check-in recorded in database', 'success');
+        loadAttendance();
+      } catch (err) {
+        if (addToast) addToast(err.message, 'error');
+      }
+    } else {
+      if (addToast) addToast('Check-in recorded', 'info');
+    }
   };
 
-  const handleCheckOut = () => setCheckOutTime(new Date());
+  const handleCheckOut = async () => {
+    const now = new Date();
+    setCheckOutTime(now);
+    const userUuid = user?.id || user?.uuid;
+    if (userUuid) {
+      try {
+        await attendanceService.checkOut(userUuid, checkInTime ? checkInTime.toISOString() : null);
+        if (addToast) addToast('Check-out recorded in database', 'success');
+        loadAttendance();
+      } catch (err) {
+        if (addToast) addToast(err.message, 'error');
+      }
+    } else {
+      if (addToast) addToast('Check-out recorded', 'info');
+    }
+  };
+
   const isCheckedIn = Boolean(checkInTime) && !checkOutTime;
   const currentStatus = checkOutTime ? 'Present' : checkInTime ? 'Present' : 'Not checked in';
 
@@ -62,6 +117,12 @@ export function Attendance() {
           </div>
         </div>
       </section>
+
+      {dbError && (
+        <div className="mb-4 p-3 bg-amber-950/40 border border-amber-800/40 text-amber-300 text-xs font-mono rounded">
+          Notice: {dbError}
+        </div>
+      )}
 
       <section className="attendance-summary" aria-label="Today's attendance summary">
         <div className="summary-card">
@@ -93,6 +154,7 @@ export function Attendance() {
             <thead>
               <tr>
                 <th>Date</th>
+                <th>Employee</th>
                 <th>Check in</th>
                 <th>Check out</th>
                 <th>Status</th>
@@ -100,15 +162,30 @@ export function Attendance() {
               </tr>
             </thead>
             <tbody>
-              {attendanceLog.map((log) => (
-                <tr key={log.id}>
-                  <td className="font-mono">{log.date}</td>
-                  <td className="font-mono">{log.checkIn}</td>
-                  <td className="font-mono">{log.checkOut}</td>
-                  <td><span className={`status-badge ${log.status.toLowerCase().replaceAll('-', '')}`}>{log.status}</span></td>
-                  <td className="font-mono text-right">{log.hours}</td>
+              {loading ? (
+                <tr>
+                  <td colSpan="6" className="font-mono text-center py-6 text-muted">
+                    Loading database attendance records...
+                  </td>
                 </tr>
-              ))}
+              ) : attendanceRecords.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="font-mono text-center py-6 text-muted">
+                    No attendance records found in database.
+                  </td>
+                </tr>
+              ) : (
+                attendanceRecords.map((log) => (
+                  <tr key={log.id}>
+                    <td className="font-mono">{log.date}</td>
+                    <td>{log.employeeName} <span className="text-xs font-mono text-muted">({log.employeeCode})</span></td>
+                    <td className="font-mono">{log.checkIn}</td>
+                    <td className="font-mono">{log.checkOut}</td>
+                    <td><span className={`status-badge ${log.status.toLowerCase().replaceAll(' ', '').replaceAll('-', '')}`}>{log.status}</span></td>
+                    <td className="font-mono text-right">{log.hours}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

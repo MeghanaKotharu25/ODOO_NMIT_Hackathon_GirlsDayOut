@@ -8,7 +8,7 @@ import './Salary.css';
 export function Salary() {
   const { user } = useAuth();
   const { addToast } = useToast();
-  const [employees, setEmployees] = useState([]);
+  const [employeesList, setEmployeesList] = useState([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -18,44 +18,38 @@ export function Salary() {
     employeeService.getEmployees()
       .then(data => {
         if (isMounted && data && data.length > 0) {
-          setEmployees(data);
+          setEmployeesList(data);
           setSelectedEmployeeId(data[0].id);
         }
       })
-      .catch(err => console.warn('Salary employees fetch error:', err))
+      .catch(err => console.warn('Salary page employees fetch error:', err))
       .finally(() => { if (isMounted) setLoading(false); });
     return () => { isMounted = false; };
   }, []);
 
-  // In a real app, this would be fetched based on the selected employee or current user
-  const employee = user?.role === 'EMPLOYEE' 
-    ? employees.find(emp => emp.id === user.id) || employees[0]
-    : employees.find(emp => emp.id === selectedEmployeeId) || employees[0];
+  const employee = (user?.role === 'EMPLOYEE'
+    ? employeesList.find(emp => emp.id === user.id || emp.uuid === user.id)
+    : employeesList.find(emp => emp.id === selectedEmployeeId)) || employeesList[0];
 
-  // Mock salary structure based on the employee's role/department
   const getSalaryStructure = (emp) => {
-    const base = emp.department === 'Engineering' ? 85000 : 65000;
-    const hra = base * 0.4; // 40% of base
-    const allowances = base * 0.2; // 20% of base
-    
+    const dept = emp?.department || 'Engineering';
+    const base = dept === 'Engineering' ? 85000 : 65000;
+    const hra = base * 0.4;
+    const allowances = base * 0.2;
     const gross = base + hra + allowances;
-    
-    const tax = gross * 0.15; // 15% estimated tax
-    const pf = base * 0.12; // 12% of base
-    
+    const tax = gross * 0.15;
+    const pf = base * 0.12;
     const deductions = tax + pf;
     const net = gross - deductions;
-    
-    return {
-      base, hra, allowances, gross, tax, pf, deductions, net
-    };
+    return { base, hra, allowances, gross, tax, pf, deductions, net };
   };
+
   if (loading || !employee) {
     return (
-      <div className="financial-page">
-        <header className="financial-header"><h1 className="page-title">Financial Ledger</h1></header>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '2rem', color: 'var(--text-muted)' }}>
-          <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} /> Loading salary data...
+      <div className="salary-page">
+        <header className="salary-header"><h1 className="page-title font-serif">Payroll & Compensation</h1></header>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '2rem', color: 'var(--text-muted)' }} className="font-mono text-sm">
+          <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} /> Loading compensation records...
         </div>
       </div>
     );
@@ -64,138 +58,107 @@ export function Salary() {
   const salary = getSalaryStructure(employee);
   const formatCurrency = (amount) => `$${amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
+  const handleDownloadPayslip = () => {
+    if (addToast) addToast('Downloading payslip PDF...', 'success');
+  };
+
   return (
-    <div className="financial-page">
-      <header className="financial-header">
-        <h1 className="page-title">Financial Ledger</h1>
-        
-        {user?.role !== 'EMPLOYEE' && (
-          <div className="employee-selector">
-            <span className="selector-label">Viewing Record For:</span>
-            <div className="selector-dropdown">
+    <div className="salary-page">
+      <header className="salary-header">
+        <div>
+          <h1 className="page-title">Payroll & Compensation</h1>
+          <p className="font-mono text-muted">Monthly Salary Breakdown & Payslips</p>
+        </div>
+
+        {user?.role !== 'EMPLOYEE' && employeesList.length > 0 && (
+          <div className="employee-selector font-mono">
+            <label>Select Employee:</label>
+            <div className="select-wrapper">
               <select 
                 value={selectedEmployeeId} 
                 onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                className="font-mono"
               >
-                {employees.map(emp => (
-                  <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName} ({emp.id})</option>
+                {employeesList.map(emp => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.firstName} {emp.lastName} ({emp.id})
+                  </option>
                 ))}
               </select>
-              <ChevronDown size={14} className="selector-icon" />
+              <ChevronDown size={14} className="select-arrow" />
             </div>
           </div>
         )}
       </header>
 
-      {/* Main Calculation Grid */}
-      <div className="calculation-ledger">
-        
-        {/* Earnings Column */}
-        <div className="ledger-column">
-          <div className="column-header">
-            <h3>Gross Earnings</h3>
+      <div className="salary-grid">
+        <div className="card salary-summary">
+          <div className="card-header">
+            <h2 className="font-serif text-lg">Net Payable Salary</h2>
+            <button className="btn-secondary text-xs" onClick={handleDownloadPayslip}>
+              <Download size={14} /> Download Payslip
+            </button>
           </div>
-          <div className="ledger-entries">
-            <div className="ledger-entry">
-              <span className="entry-label">Base Compensation</span>
-              <span className="entry-value font-mono">{formatCurrency(salary.base)}</span>
-            </div>
-            <div className="ledger-entry">
-              <span className="entry-label">Housing Allowance (HRA)</span>
-              <span className="entry-value font-mono">{formatCurrency(salary.hra)}</span>
-            </div>
-            <div className="ledger-entry">
-              <span className="entry-label">Special Allowances</span>
-              <span className="entry-value font-mono">{formatCurrency(salary.allowances)}</span>
-            </div>
+          <div className="net-salary-amount font-mono">
+            {formatCurrency(salary.net)}
           </div>
-          <div className="ledger-subtotal">
-            <span className="subtotal-label">Total Earnings</span>
-            <span className="subtotal-value font-mono">{formatCurrency(salary.gross)}</span>
+          <p className="text-muted text-xs font-mono mt-1">For period: October 2025</p>
+
+          <div className="salary-meta mt-6 pt-6 border-t border-[var(--border-subtle)]">
+            <div className="meta-item">
+              <span className="text-muted text-xs font-mono">Employee</span>
+              <strong className="text-sm font-sans">{employee?.firstName} {employee?.lastName}</strong>
+            </div>
+            <div className="meta-item">
+              <span className="text-muted text-xs font-mono">Role / Dept</span>
+              <strong className="text-sm font-sans">{employee?.position} ({employee?.department})</strong>
+            </div>
+            <div className="meta-item">
+              <span className="text-muted text-xs font-mono">Payment Status</span>
+              <span className="status-badge present">Paid</span>
+            </div>
           </div>
         </div>
 
-        {/* Deductions Column */}
-        <div className="ledger-column">
-          <div className="column-header">
-            <h3>Deductions</h3>
-          </div>
-          <div className="ledger-entries">
-            <div className="ledger-entry">
-              <span className="entry-label">Income Tax (Est.)</span>
-              <span className="entry-value font-mono text-error">-{formatCurrency(salary.tax)}</span>
+        <div className="card breakdown-card">
+          <h2 className="font-serif text-lg mb-4">Earnings Breakdown</h2>
+          <div className="breakdown-list">
+            <div className="breakdown-item">
+              <span>Basic Salary</span>
+              <span className="font-mono">{formatCurrency(salary.base)}</span>
             </div>
-            <div className="ledger-entry">
-              <span className="entry-label">Provident Fund (PF)</span>
-              <span className="entry-value font-mono text-error">-{formatCurrency(salary.pf)}</span>
+            <div className="breakdown-item">
+              <span>House Rent Allowance (HRA)</span>
+              <span className="font-mono">{formatCurrency(salary.hra)}</span>
             </div>
-          </div>
-          <div className="ledger-subtotal">
-            <span className="subtotal-label">Total Deductions</span>
-            <span className="subtotal-value font-mono text-error">-{formatCurrency(salary.deductions)}</span>
+            <div className="breakdown-item">
+              <span>Special & Other Allowances</span>
+              <span className="font-mono">{formatCurrency(salary.allowances)}</span>
+            </div>
+            <div className="breakdown-item total font-bold">
+              <span>Gross Earnings</span>
+              <span className="font-mono">{formatCurrency(salary.gross)}</span>
+            </div>
           </div>
         </div>
 
+        <div className="card breakdown-card">
+          <h2 className="font-serif text-lg mb-4">Deductions Breakdown</h2>
+          <div className="breakdown-list">
+            <div className="breakdown-item">
+              <span>Income Tax (TDS)</span>
+              <span className="font-mono text-red-400">-{formatCurrency(salary.tax)}</span>
+            </div>
+            <div className="breakdown-item">
+              <span>Provident Fund (PF)</span>
+              <span className="font-mono text-red-400">-{formatCurrency(salary.pf)}</span>
+            </div>
+            <div className="breakdown-item total font-bold">
+              <span>Total Deductions</span>
+              <span className="font-mono text-red-400">-{formatCurrency(salary.deductions)}</span>
+            </div>
+          </div>
+        </div>
       </div>
-
-      {/* Net Salary Result */}
-      <div className="net-salary-block">
-        <div className="net-details">
-          <span className="net-label">Net Payable Amount</span>
-          <span className="net-value font-mono">{formatCurrency(salary.net)}</span>
-        </div>
-        <div className="net-structure-bar">
-          <div className="bar-segment earnings" style={{ width: `${(salary.net / salary.gross) * 100}%` }}></div>
-          <div className="bar-segment deductions" style={{ width: `${(salary.deductions / salary.gross) * 100}%` }}></div>
-        </div>
-        <div className="net-legend font-mono">
-          <span><span className="legend-dot earnings"></span> Net Pay</span>
-          <span><span className="legend-dot deductions"></span> Deductions</span>
-        </div>
-      </div>
-
-      {/* Payslips */}
-      <div className="payslip-archive">
-        <div className="archive-header">
-          <h3>Payslip Archive</h3>
-        </div>
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Period</th>
-              <th className="text-right">Net Pay</th>
-              <th>Status</th>
-              <th className="text-right">Document</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td className="font-mono">September 2024</td>
-              <td className="font-mono text-right">{formatCurrency(salary.net)}</td>
-              <td><span className="badge badge-success">Processed</span></td>
-              <td className="text-right">
-                <button 
-                  className="btn-link"
-                  onClick={() => addToast('Generating Payslip PDF for September 2024...', 'success')}
-                ><Download size={14} className="inline-icon" /> PDF</button>
-              </td>
-            </tr>
-            <tr>
-              <td className="font-mono">August 2024</td>
-              <td className="font-mono text-right">{formatCurrency(salary.net)}</td>
-              <td><span className="badge badge-success">Processed</span></td>
-              <td className="text-right">
-                <button 
-                  className="btn-link"
-                  onClick={() => addToast('Generating Payslip PDF for August 2024...', 'success')}
-                ><Download size={14} className="inline-icon" /> PDF</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
     </div>
   );
 }
