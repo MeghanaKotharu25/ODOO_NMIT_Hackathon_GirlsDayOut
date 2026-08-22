@@ -19,7 +19,7 @@ INSERT INTO public.profiles (
     join_date,
     avatar_url
 )
-SELECT 
+SELECT
     u.id,
     d.employee_code,
     d.first_name,
@@ -68,7 +68,7 @@ INSERT INTO public.attendance (
     check_out,
     work_hours
 )
-SELECT 
+SELECT
     p.id,
     CURRENT_DATE,
     a.status,

@@ -46,7 +46,7 @@ export const employeeService = {
     // Map database rows to UI Employee object model
     return profiles.map(profile => {
       const rawStatus = attendanceMap.get(profile.id) || profile.status || 'present';
-      
+
       let displayStatus = 'Present';
       if (rawStatus.toLowerCase() === 'absent') displayStatus = 'Absent';
       else if (rawStatus.toLowerCase() === 'leave' || rawStatus.toLowerCase() === 'on leave') displayStatus = 'On Leave';
