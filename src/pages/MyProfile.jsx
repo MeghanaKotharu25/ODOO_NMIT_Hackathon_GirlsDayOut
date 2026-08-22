@@ -1,150 +1,154 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useToast } from '../context/ToastContext';
-import { Mail, Phone, MapPin, Briefcase, Calendar as CalendarIcon, Shield, Key } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 import './MyProfile.css';
 
 export function MyProfile() {
   const { user } = useAuth();
-  const { addToast } = useToast();
-  
-  const [passwordForm, setPasswordForm] = useState({ current: '', new: '', confirm: '' });
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-
-  const handlePasswordChange = (e) => {
-    e.preventDefault();
-    if (!passwordForm.new || !passwordForm.confirm) {
-      addToast('Please fill out the new password fields.', 'error');
-      return;
-    }
-    if (passwordForm.new !== passwordForm.confirm) {
-      addToast('New passwords do not match.', 'error');
-      return;
-    }
-    
-    setIsChangingPassword(true);
-    // Simulate API call for password change
-    setTimeout(() => {
-      addToast('Password successfully updated.', 'success');
-      setPasswordForm({ current: '', new: '', confirm: '' });
-      setIsChangingPassword(false);
-    }, 1000);
-  };
+  const [activeTab, setActiveTab] = useState('resume');
   
   if (!user) return null;
 
   return (
     <div className="profile-page">
-      <header className="profile-header">
-        <h1 className="page-title font-serif">Operator Profile</h1>
-        <p className="text-muted font-mono uppercase text-xs">Self-Service Access</p>
+      <header className="profile-page-header">
+        <h1 className="page-title font-serif">My Profile</h1>
       </header>
-      
-      <div className="profile-grid">
-        <div className="profile-card identity-card">
-          <div className="identity-header">
-            <img src={user.avatarUrl} alt={user.firstName} className="profile-avatar" />
-            <div className="identity-title">
-              <h2 className="font-serif text-2xl">{user.firstName} {user.lastName}</h2>
-              <span className="badge badge-info mt-2">{user.position}</span>
-            </div>
-          </div>
-          
-          <div className="identity-details mt-8">
-            <div className="detail-row">
-              <span className="detail-label font-mono text-xs uppercase text-muted"><Mail size={14} className="inline-icon"/> Comm</span>
-              <span className="detail-value">{user.email}</span>
-            </div>
-            <div className="detail-row">
-              <span className="detail-label font-mono text-xs uppercase text-muted"><Phone size={14} className="inline-icon"/> Contact</span>
-              <span className="detail-value">{user.phone || '+1 (555) 000-0000'}</span>
-            </div>
-            <div className="detail-row">
-              <span className="detail-label font-mono text-xs uppercase text-muted"><MapPin size={14} className="inline-icon"/> Location</span>
-              <span className="detail-value">{user.location || 'Remote'}</span>
-            </div>
-          </div>
-        </div>
 
-        <div className="profile-card ops-card">
-          <h3 className="section-title font-mono uppercase text-sm border-b pb-4 mb-4">Operational Status</h3>
-          
-          <div className="ops-grid">
-            <div className="ops-stat">
-              <span className="ops-label text-muted"><Briefcase size={16} className="mb-2"/> Department</span>
-              <span className="ops-value font-serif text-xl">{user.department}</span>
+      <div className="profile-main-card">
+        {/* Top Info Section */}
+        <div className="profile-top-section">
+          <div className="profile-identity">
+            <div className="avatar-wrapper">
+              <img src={user.avatarUrl || `https://i.pravatar.cc/150?u=${user.id || 'EMP'}`} alt={user.firstName} className="profile-avatar-large" />
+              <button className="edit-avatar-btn"><Pencil size={14} /></button>
             </div>
-            <div className="ops-stat">
-              <span className="ops-label text-muted"><CalendarIcon size={16} className="mb-2"/> Activated</span>
-              <span className="ops-value font-mono">{user.joinDate || '2023-01-15'}</span>
-            </div>
-            <div className="ops-stat">
-              <span className="ops-label text-muted"><Shield size={16} className="mb-2"/> Clearance</span>
-              <span className="ops-value font-mono">{user.role}</span>
-            </div>
-          </div>
-          
-          <div className="mt-8 border-t pt-6" style={{ borderColor: 'var(--border-strong)'}}>
-            <h4 className="font-mono uppercase text-xs text-muted mb-4">Security Settings</h4>
             
-            <form onSubmit={handlePasswordChange} className="password-change-form">
-              <div className="form-group mb-3">
-                <label className="form-label font-mono text-[10px] uppercase text-muted">Current Password</label>
-                <input 
-                  type="password" 
-                  className="form-input text-sm p-2" 
-                  value={passwordForm.current}
-                  onChange={(e) => setPasswordForm({...passwordForm, current: e.target.value})}
-                  placeholder="••••••••"
-                />
+            <div className="identity-details">
+              <h2 className="font-serif text-3xl mb-4">{user.firstName} {user.lastName}</h2>
+              
+              <div className="info-grid">
+                <span className="info-label text-muted">Login ID</span>
+                <span className="info-value">{user.email?.split('@')[0] || user.id}</span>
+                
+                <span className="info-label text-muted">Email</span>
+                <span className="info-value">{user.email}</span>
+                
+                <span className="info-label text-muted">Mobile</span>
+                <span className="info-value">{user.phone || '+1 (555) 000-0000'}</span>
               </div>
-              <div className="form-group mb-3">
-                <label className="form-label font-mono text-[10px] uppercase text-muted">New Password</label>
-                <input 
-                  type="password" 
-                  className="form-input text-sm p-2" 
-                  value={passwordForm.new}
-                  onChange={(e) => setPasswordForm({...passwordForm, new: e.target.value})}
-                  placeholder="••••••••"
-                />
-              </div>
-              <div className="form-group mb-4">
-                <label className="form-label font-mono text-[10px] uppercase text-muted">Confirm New Password</label>
-                <input 
-                  type="password" 
-                  className="form-input text-sm p-2" 
-                  value={passwordForm.confirm}
-                  onChange={(e) => setPasswordForm({...passwordForm, confirm: e.target.value})}
-                  placeholder="••••••••"
-                />
-              </div>
-              <button 
-                type="submit" 
-                className="btn-secondary w-full py-2 text-xs"
-                disabled={isChangingPassword}
-              >
-                <Key size={14} className="mr-2" />
-                {isChangingPassword ? 'Updating...' : 'Update Password'}
-              </button>
-            </form>
+            </div>
           </div>
-
-          <div className="mt-8 border-t pt-6" style={{ borderColor: 'var(--border-strong)'}}>
-            <h4 className="font-mono uppercase text-xs text-muted mb-4">Recent Access Logs</h4>
-            <ul className="access-logs">
-              <li className="log-item">
-                <span className="log-time font-mono text-xs">Today, 09:01 AM</span>
-                <span className="log-action font-sans text-sm">System Authentication</span>
-                <span className="log-status font-mono text-xs" style={{color: 'var(--status-success)'}}>SUCCESS</span>
-              </li>
-              <li className="log-item">
-                <span className="log-time font-mono text-xs">Yesterday, 17:35 PM</span>
-                <span className="log-action font-sans text-sm">Session Terminated</span>
-                <span className="log-status font-mono text-xs text-muted">CLOSED</span>
-              </li>
-            </ul>
+          
+          <div className="profile-work-info">
+            <div className="info-grid work-grid">
+              <span className="info-label text-muted">Company</span>
+              <span className="info-value">Dayflow Inc.</span>
+              
+              <span className="info-label text-muted">Department</span>
+              <span className="info-value">{user.department || 'Operations'}</span>
+              
+              <span className="info-label text-muted">Manager</span>
+              <span className="info-value">Sarah Jenkins</span>
+              
+              <span className="info-label text-muted">Location</span>
+              <span className="info-value">{user.location || 'New York, HQ'}</span>
+            </div>
           </div>
         </div>
+
+        {/* Tabs */}
+        <div className="profile-tabs">
+          <button 
+            className={`tab-item ${activeTab === 'resume' ? 'active' : ''}`}
+            onClick={() => setActiveTab('resume')}
+          >
+            Resume
+          </button>
+          <button 
+            className={`tab-item ${activeTab === 'private' ? 'active' : ''}`}
+            onClick={() => setActiveTab('private')}
+          >
+            Private Info
+          </button>
+          <button 
+            className={`tab-item ${activeTab === 'salary' ? 'active' : ''}`}
+            onClick={() => setActiveTab('salary')}
+          >
+            Salary Info
+          </button>
+        </div>
+
+        {/* Tab Content - Resume */}
+        {activeTab === 'resume' && (
+          <div className="resume-content-grid">
+            <div className="resume-left-col">
+              <section className="resume-section card-box">
+                <div className="section-header">
+                  <h3 className="font-serif text-xl">About</h3>
+                  <button className="icon-btn"><Pencil size={16} /></button>
+                </div>
+                <p className="text-secondary text-sm">
+                  Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.
+                </p>
+              </section>
+
+              <section className="resume-section card-box">
+                <div className="section-header">
+                  <h3 className="font-serif text-xl">What I love about my job</h3>
+                  <button className="icon-btn"><Pencil size={16} /></button>
+                </div>
+                <p className="text-secondary text-sm">
+                  Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.
+                </p>
+              </section>
+
+              <section className="resume-section card-box">
+                <div className="section-header">
+                  <h3 className="font-serif text-xl">My interests and hobbies</h3>
+                  <button className="icon-btn"><Pencil size={16} /></button>
+                </div>
+                <p className="text-secondary text-sm">
+                  Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.
+                </p>
+              </section>
+            </div>
+
+            <div className="resume-right-col">
+              <section className="resume-section card-box">
+                <div className="section-header">
+                  <h3 className="font-serif text-xl">Skills</h3>
+                </div>
+                <div className="skills-content">
+                  {/* Placeholder for skills if any exist, otherwise just the add button */}
+                </div>
+                <button className="btn-add-text mt-4">+ Add Skills</button>
+              </section>
+
+              <section className="resume-section card-box">
+                <div className="section-header">
+                  <h3 className="font-serif text-xl">Certification</h3>
+                </div>
+                <div className="cert-content">
+                  {/* Placeholder for certs if any exist */}
+                </div>
+                <button className="btn-add-text mt-4">+ Add Certification</button>
+              </section>
+            </div>
+          </div>
+        )}
+        
+        {/* Placeholder for other tabs */}
+        {activeTab === 'private' && (
+          <div className="resume-content-grid">
+            <div className="card-box w-full p-8 text-center text-muted font-mono" style={{ gridColumn: '1 / -1' }}>Private Info Content Not Available</div>
+          </div>
+        )}
+        {activeTab === 'salary' && (
+          <div className="resume-content-grid">
+            <div className="card-box w-full p-8 text-center text-muted font-mono" style={{ gridColumn: '1 / -1' }}>Salary Info Content Not Available</div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -27,7 +27,7 @@ export function LoadingScreen() {
     });
 
     const finalTimeout = setTimeout(() => {
-      navigate('/');
+      navigate('/employees');
     }, 2500);
 
     return () => {

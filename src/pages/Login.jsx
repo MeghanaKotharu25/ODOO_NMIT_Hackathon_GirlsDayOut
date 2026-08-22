@@ -76,7 +76,7 @@ export function Login() {
           
           <button 
             type="submit" 
-            className="btn-primary login-btn mt-4 w-full justify-center py-4"
+            className="btn btn-primary login-btn mt-4 w-full justify-center py-4"
             disabled={isSubmitting}
           >
             {isSubmitting ? 'SIGNING IN...' : 'SIGN IN'}
@@ -87,7 +87,7 @@ export function Login() {
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button 
                 type="button" 
-                className="btn-secondary"
+                className="btn btn-secondary"
                 style={{ flex: 1, padding: '0.5rem', fontSize: '0.75rem' }}
                 onClick={() => { setEmail('elena.r@dayflow.io'); setPassword('Password123!'); }}
               >
@@ -95,7 +95,7 @@ export function Login() {
               </button>
               <button 
                 type="button" 
-                className="btn-secondary"
+                className="btn btn-secondary"
                 style={{ flex: 1, padding: '0.5rem', fontSize: '0.75rem' }}
                 onClick={() => { setEmail('sarah.chen@dayflow.io'); setPassword('Password123!'); }}
               >
