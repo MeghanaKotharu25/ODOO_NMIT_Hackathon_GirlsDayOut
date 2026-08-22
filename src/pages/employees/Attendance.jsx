@@ -131,28 +131,77 @@ export default function Attendance() {
         <div className="divider-line"></div>
       </div>
 
-      <div className="attendance-history-controls">
-        <label className="font-mono" htmlFor="attendance-month">Review month</label>
-        <input id="attendance-month" type="month" value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value)} />
-        <span className="font-mono text-muted">Payable days: {attendanceService.calculatePayableDays(history)}</span>
+      <div className="attendance-history-controls" style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', gap: '0.25rem' }}>
+          <button className="btn-secondary" onClick={() => {
+            const date = new Date(selectedMonth + '-01');
+            date.setMonth(date.getMonth() - 1);
+            setSelectedMonth(date.toISOString().slice(0, 7));
+          }}>&lt;</button>
+          <button className="btn-secondary" onClick={() => {
+            const date = new Date(selectedMonth + '-01');
+            date.setMonth(date.getMonth() + 1);
+            setSelectedMonth(date.toISOString().slice(0, 7));
+          }}>&gt;</button>
+        </div>
+        <input id="attendance-month" type="month" className="form-input" style={{ width: 'auto' }} value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value)} />
+        
+        <div className="stats-pills" style={{ display: 'flex', gap: '1rem', marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>
+          <div className="stat-pill border px-3 py-1 rounded border-black">
+            Count of days present: {history.filter(r => r.status === 'present' || r.status === 'half_day').length}
+          </div>
+          <div className="stat-pill border px-3 py-1 rounded border-black">
+            Leaves count: {history.filter(r => r.status === 'leave').length}
+          </div>
+          <div className="stat-pill border px-3 py-1 rounded border-black">
+            Total working days: {history.length}
+          </div>
+        </div>
       </div>
 
       <section className="attendance-history">
         <div className="data-table-wrapper">
           <table className="data-table">
             <thead>
-              <tr><th>Date</th><th>Check in</th><th>Check out</th><th>Status</th><th className="text-right">Duration</th></tr>
+              <tr>
+                <th>Date</th>
+                <th>Check In</th>
+                <th>Check Out</th>
+                <th>Work Hours</th>
+                <th>Extra hours</th>
+              </tr>
             </thead>
             <tbody>
-              {history.length ? history.map((record) => (
-                <tr key={record.id}>
-                  <td className="font-mono">{record.date}</td>
-                  <td className="font-mono">{formatTime(record.check_in)}</td>
-                  <td className="font-mono">{formatTime(record.check_out)}</td>
-                  <td><span className={`status-badge ${statusClass(record.status)}`}>{record.status.replace('_', '-')}</span></td>
-                  <td className="font-mono text-right">{formatDuration(record.check_in, record.check_out)}</td>
-                </tr>
-              )) : (
+              {history.length ? history.map((record) => {
+                let worked = record.work_hours || 0;
+                if (!worked && record.check_in && record.check_out) {
+                  const cin = new Date(record.check_in);
+                  const cout = new Date(record.check_out);
+                  if (!isNaN(cin) && !isNaN(cout)) {
+                    worked = (cout - cin) / 3600000;
+                  }
+                }
+                
+                // Assuming default shift is 8.5 hours if not specified
+                let scheduledHours = 8.5; 
+                // Since this view is only for the current user, we can assume standard hours if default_in_time is not joined
+                // Extra Hours
+                const extraHours = Math.max(0, worked - scheduledHours);
+
+                return (
+                  <tr key={record.id}>
+                    <td className="font-mono">{record.date}</td>
+                    <td className="font-mono">{formatTime(record.check_in)}</td>
+                    <td className="font-mono">{formatTime(record.check_out)}</td>
+                    <td className="font-mono">
+                      {worked > 0 ? `${Math.floor(worked)}h ${Math.round((worked % 1) * 60).toString().padStart(2, '0')}m` : '--'}
+                    </td>
+                    <td className="font-mono" style={{ color: extraHours > 0 ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                      {extraHours > 0 ? `+${Math.floor(extraHours)}h ${Math.round((extraHours % 1) * 60).toString().padStart(2, '0')}m` : '--'}
+                    </td>
+                  </tr>
+                );
+              }) : (
                 <tr><td colSpan="5" className="attendance-empty">No attendance records yet.</td></tr>
               )}
             </tbody>

@@ -152,11 +152,11 @@ export const attendanceService = {
     const [{ data: profiles, error: profilesError }, { data: attendance, error: attendanceError }] = await Promise.all([
       supabase
         .from('profiles')
-        .select('id, employee_code, first_name, last_name, email, department, position')
+        .select('id, employee_code, first_name, last_name, email, department, position, default_in_time, default_out_time')
         .order('employee_code', { ascending: true }),
       supabase
         .from('attendance')
-        .select('id, employee_id, date, check_in, check_out, status')
+        .select('id, employee_id, date, check_in, check_out, status, work_hours')
         .eq('date', date),
     ]);
     if (profilesError) throw profilesError;
@@ -171,6 +171,7 @@ export const attendanceService = {
         status: record?.status || 'absent',
         checkIn: record?.check_in || '',
         checkOut: record?.check_out || '',
+        workHours: record?.work_hours || 0,
       };
     });
   },

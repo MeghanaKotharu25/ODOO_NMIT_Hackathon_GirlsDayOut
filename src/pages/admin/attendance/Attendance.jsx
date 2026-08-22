@@ -90,41 +90,78 @@ export default function Attendance() {
         <div className="data-table-wrapper">
           <table className="data-table">
             <thead>
-              <tr><th>Employee</th><th>Department</th><th>Check in</th><th>Check out</th><th>Status</th><th>Action</th></tr>
+              <tr>
+                <th>Employee</th>
+                <th>Check in</th>
+                <th>Check out</th>
+                <th>Work Hours</th>
+                <th>Extra Hours</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="6" className="attendance-empty">Loading attendance records...</td></tr>
-              ) : records.length ? records.map((row) => (
-                <tr key={row.profile.id}>
-                  <td>
-                    <strong>{row.profile.first_name} {row.profile.last_name}</strong>
-                    <small>{row.profile.employee_code} · {row.profile.email}</small>
-                  </td>
-                  <td>{row.profile.department || row.profile.position || 'Employee'}</td>
-                  <td>{formatTime(row.checkIn)}</td>
-                  <td>{formatTime(row.checkOut)}</td>
-                  <td>
-                    <select
-                      className={`admin-status-select ${drafts[row.profile.id]?.status}`}
-                      value={drafts[row.profile.id]?.status || row.status}
-                      onChange={(event) => updateDraft(row.profile.id, 'status', event.target.value)}
-                    >
-                      {statuses.map((status) => <option key={status} value={status}>{status.replace('_', '-')}</option>)}
-                    </select>
-                  </td>
-                  <td>
-                    <div className="admin-edit-actions">
-                      <input aria-label={`Check-in time for ${row.profile.first_name}`} type="time" value={drafts[row.profile.id]?.checkIn || ''} onChange={(event) => updateDraft(row.profile.id, 'checkIn', event.target.value)} />
-                      <input aria-label={`Check-out time for ${row.profile.first_name}`} type="time" value={drafts[row.profile.id]?.checkOut || ''} onChange={(event) => updateDraft(row.profile.id, 'checkOut', event.target.value)} />
-                      <button className="btn btn-primary" type="button" onClick={() => saveRecord(row)} disabled={savingId === row.profile.id}>
-                        <Save size={15} /> {savingId === row.profile.id ? 'Saving' : 'Save'}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              )) : (
-                <tr><td colSpan="6" className="attendance-empty">No employees found.</td></tr>
+                <tr><td colSpan="7" className="attendance-empty">Loading attendance records...</td></tr>
+              ) : records.length ? records.map((row) => {
+                
+                // Work Hours calculation
+                let worked = row.workHours || 0;
+                if (!worked && row.checkIn && row.checkOut) {
+                  const cin = new Date(row.checkIn);
+                  const cout = new Date(row.checkOut);
+                  if (!isNaN(cin) && !isNaN(cout)) {
+                    worked = (cout - cin) / 3600000;
+                  }
+                }
+                
+                // Scheduled Hours Calculation
+                let scheduledHours = 8.5; // default 09:00 to 17:30
+                if (row.profile.default_in_time && row.profile.default_out_time) {
+                  const [inH, inM] = row.profile.default_in_time.split(':').map(Number);
+                  const [outH, outM] = row.profile.default_out_time.split(':').map(Number);
+                  scheduledHours = (outH + outM/60) - (inH + inM/60);
+                }
+                
+                // Extra Hours
+                const extraHours = Math.max(0, worked - scheduledHours);
+
+                return (
+                  <tr key={row.profile.id}>
+                    <td>
+                      <strong>{row.profile.first_name} {row.profile.last_name}</strong>
+                      <small>{row.profile.employee_code} · {row.profile.department}</small>
+                    </td>
+                    <td>{formatTime(row.checkIn)}</td>
+                    <td>{formatTime(row.checkOut)}</td>
+                    <td className="font-mono text-sm">
+                      {worked > 0 ? `${Math.floor(worked)}h ${Math.round((worked % 1) * 60).toString().padStart(2, '0')}m` : '--'}
+                    </td>
+                    <td className="font-mono text-sm" style={{ color: extraHours > 0 ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                      {extraHours > 0 ? `+${Math.floor(extraHours)}h ${Math.round((extraHours % 1) * 60).toString().padStart(2, '0')}m` : '--'}
+                    </td>
+                    <td>
+                      <select
+                        className={`admin-status-select ${drafts[row.profile.id]?.status}`}
+                        value={drafts[row.profile.id]?.status || row.status}
+                        onChange={(event) => updateDraft(row.profile.id, 'status', event.target.value)}
+                      >
+                        {statuses.map((status) => <option key={status} value={status}>{status.replace('_', '-')}</option>)}
+                      </select>
+                    </td>
+                    <td>
+                      <div className="admin-edit-actions">
+                        <input aria-label={`Check-in time for ${row.profile.first_name}`} type="time" value={drafts[row.profile.id]?.checkIn || ''} onChange={(event) => updateDraft(row.profile.id, 'checkIn', event.target.value)} />
+                        <input aria-label={`Check-out time for ${row.profile.first_name}`} type="time" value={drafts[row.profile.id]?.checkOut || ''} onChange={(event) => updateDraft(row.profile.id, 'checkOut', event.target.value)} />
+                        <button className="btn btn-primary" type="button" onClick={() => saveRecord(row)} disabled={savingId === row.profile.id}>
+                          <Save size={15} /> {savingId === row.profile.id ? 'Saving' : 'Save'}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              }) : (
+                <tr><td colSpan="7" className="attendance-empty">No employees found.</td></tr>
               )}
             </tbody>
           </table>
