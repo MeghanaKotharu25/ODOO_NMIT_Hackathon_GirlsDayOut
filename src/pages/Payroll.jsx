@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, DollarSign, ArrowUpRight, ArrowDownRight, Edit3 } from 'lucide-react';
+import { Search, DollarSign, ArrowUpRight, ArrowDownRight, Edit3, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Magnetic } from '../components/layout/Magnetic';
 import { useToast } from '../context/ToastContext';

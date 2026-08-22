@@ -1,7 +1,22 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { authService } from '../services/authService';
+import { isSupabaseConfigured } from '../lib/supabase';
 
 const AuthContext = createContext(null);
+
+// Mock user for demo mode (when Supabase is not configured)
+const DEMO_USER = {
+  id: 'demo-admin-001',
+  email: 'admin@dayflow.demo',
+  role: 'ADMIN',
+  profile: {
+    first_name: 'Elena',
+    last_name: 'Vasquez',
+    role: 'ADMIN',
+    department: 'Human Resources',
+    position: 'HR Director',
+  }
+};
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
@@ -25,6 +40,15 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let mounted = true;
+
+    // DEMO MODE: If Supabase is not configured, skip auth entirely
+    if (!isSupabaseConfigured) {
+      console.info('[Dayflow] Demo mode active — Supabase not configured. Using mock user.');
+      setUser(DEMO_USER);
+      setSession({ user: DEMO_USER });
+      setLoading(false);
+      return;
+    }
 
     // Get initial session on app mount
     authService.getCurrentSession()
