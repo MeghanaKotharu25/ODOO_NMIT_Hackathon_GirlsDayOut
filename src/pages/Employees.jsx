@@ -161,9 +161,9 @@ export function Employees() {
             >
               <div className="roster-image-container">
                 <img src={emp.avatarUrl} alt={emp.firstName} className="roster-avatar" />
-              </div>
-              <div className="roster-status-overlay">
-                {getStatusDisplay(emp.status)}
+                <div className="roster-status-overlay">
+                  {getStatusDisplay(emp.status)}
+                </div>
               </div>
 
               <div className="roster-details">
