@@ -18,7 +18,7 @@ export function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { signUp } = useAuth();
+  const { signUp, login } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
 
@@ -78,11 +78,18 @@ export function Register() {
       }
 
       if (result?.session) {
-        addToast('HR/Admin Registration successful! Welcome to Dayflow.', 'success');
+        addToast('Registration successful! Welcome to Dayflow.', 'success');
         navigate('/loading');
       } else {
-        addToast('HR/Admin Registration successful! Please check your email to verify or sign in.', 'success');
-        navigate('/login');
+        // Try automatic sign in (works if email confirmations are disabled but auto-sign-in isn't returned)
+        try {
+          await login(trimmedEmail, formData.password);
+          addToast('Registration successful! Automatically logged in.', 'success');
+          navigate('/loading');
+        } catch (loginErr) {
+          addToast('Registration successful! Please check your email to verify.', 'success');
+          navigate('/login');
+        }
       }
     } catch (err) {
       console.error('Registration error:', err);
