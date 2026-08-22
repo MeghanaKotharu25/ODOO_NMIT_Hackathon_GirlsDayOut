@@ -3,6 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { ArrowUpRight, ArrowDownRight, Clock, AlertTriangle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import './Dashboard.css';
 
 const attendanceData = [
@@ -15,6 +16,9 @@ const attendanceData = [
 
 export function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  const currentDate = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
   return (
     <div className="dashboard-editorial">
@@ -22,8 +26,8 @@ export function Dashboard() {
       {/* Top Editorial Section */}
       <section className="dashboard-hero">
         <div className="hero-typography">
-          <h1 className="hero-greeting">Good morning, Elena.</h1>
-          <p className="hero-date font-mono">Thursday, October 24, 2024</p>
+          <h1 className="hero-greeting glitch-text" data-text={`Good morning, ${user?.firstName || 'Operator'}.`}>Good morning, {user?.firstName || 'Operator'}.</h1>
+          <p className="hero-date font-mono uppercase text-sm tracking-widest text-muted">{currentDate}</p>
           
           <div className="hero-operational-summary">
             <div className="summary-stat">
@@ -120,6 +124,14 @@ export function Dashboard() {
           </ResponsiveContainer>
         </div>
       </section>
+      
+      {/* Ticker Tape */}
+      <div className="system-ticker mt-12 border-y border-[var(--border-heavy)] py-2 overflow-hidden bg-[var(--bg-subtle)]" style={{ borderColor: 'var(--border-heavy)' }}>
+        <div className="ticker-content font-mono text-xs uppercase tracking-widest whitespace-nowrap">
+          SYSTEM SECURE // NO CRITICAL ALERTS // NODE 44 ONLINE // {currentDate.toUpperCase()} // LATENCY: 24MS // 
+          ALL PROTOCOLS NOMINAL // PERSONNEL REGISTRY SYNCED // ATTENDANCE RATE: 92% // NEXT BACKUP IN 4H 12M //
+        </div>
+      </div>
       
     </div>
   );

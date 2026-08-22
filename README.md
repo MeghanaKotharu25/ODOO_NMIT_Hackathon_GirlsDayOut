@@ -1,47 +1,52 @@
 # Dayflow HRMS 🌊
 
-Dayflow is a premium, high-fidelity Human Resources Management System (HRMS) designed with a "quiet, premium operating system" philosophy. It focuses on editorial design, precise hierarchy, and intentional whitespace to provide a professional, bespoke user experience.
+**Dayflow** is a premium, high-fidelity Human Resources Management System (HRMS) built for the modern enterprise. 
 
-## Tech Stack
+For the NMIT Hackathon "Girls Day Out", we designed Dayflow with a **"quiet, premium operating system"** philosophy. Instead of a standard SaaS dashboard, Dayflow feels like a bespoke, cinematic terminal. It leverages strict monochromatic palettes, heavy typographic hierarchy, structural borders, and fluid animations to create a zero-friction, tactile experience.
+
+> **Note on Branching:** All of the premium design and interactive state features are located on the `frontend-build` branch. The `main` branch contains an older, deprecated sidebar layout. **Please evaluate the `frontend-build` branch!**
+
+## 🎬 Cinematic OS Experience
+- **Boot Sequence**: Secure terminal-style login screen leading into a full CRT-scanline boot sequence.
+- **Physical UI**: Menus, popovers, and drawers don't just appear; they slide in with snappy, physics-based motion curves.
+- **Atmosphere**: A global, animated SVG film grain overlay grounds the application in a physical space.
+- **Custom Hardware**: Custom crosshair/ring cursor system that reacts to interactive elements.
+
+## ⚡ Core Features
+- **Stateful Interactions**: Fully simulated React state (without a backend). Add employees to the directory, approve/reject time-off requests, and interact with the ledger—all instantly reflected in the UI.
+- **Global Toast Engine**: Custom-built, contextual notification system that acknowledges every user action (e.g., generating PDFs, terminating sessions).
+- **Command Center Dashboard**: Aggregated operational summaries, SVG-based chart visualizations (via Recharts), and a live scrolling system ticker.
+- **Personnel Directory**: Real-time filtering by name and department, with an integrated drawer for new records.
+
+## 🛠️ Tech Stack
 - **Frontend Framework**: React 19 + Vite
-- **Styling**: Custom CSS variables, CSS Grid/Flexbox, Tailwind (for utility support)
-- **Routing**: React Router DOM
+- **Styling**: Vanilla CSS (Custom Design System, variables, Keyframe animations)
+- **Routing**: React Router DOM (with protected route simulation)
 - **Icons**: Lucide React
 - **Data Visualization**: Recharts
-- **Backend/Database**: Supabase (Integration Pending)
 
-## Features
-- **Dashboard**: Command center with attendance trends and key metrics.
-- **Employee Directory**: Searchable personnel database with status indicators.
-- **Profile Management**: Detailed views for personal records, security, and resume.
-- **Salary (Admin)**: Visual breakdown of salary structures and deductions.
-- **Attendance**: Real-time check-in/out and historical log tables.
-- **Time Off**: Leave balance tracking and admin approval workflows.
-
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js (v18 or higher recommended)
+- Node.js (v18+ recommended)
 - npm or yarn
 
 ### Installation
-1. Clone the repository:
+1. Clone the repository and checkout the build branch:
    ```bash
    git clone https://github.com/MeghanaKotharu25/ODOO_NMIT_Hackathon_GirlsDayOut.git
-   ```
-2. Navigate to the project directory:
-   ```bash
    cd ODOO_NMIT_Hackathon_GirlsDayOut
+   git checkout frontend-build
    ```
-3. Install dependencies:
+2. Install dependencies:
    ```bash
    npm install
    ```
-4. Start the development server:
+3. Start the development server:
    ```bash
    npm run dev
    ```
-5. Open your browser and navigate to `http://localhost:5173/`.
+4. Access the portal at `http://localhost:5173/`. Use any mock credentials to pass the login gate and initiate the boot sequence!
 
-### Backend Integration
-For detailed instructions on how to integrate this frontend with the Supabase backend, please refer to the `BACKEND_INTEGRATION.md` file in the root directory.
+---
+*Built with precision for the NMIT Hackathon.*

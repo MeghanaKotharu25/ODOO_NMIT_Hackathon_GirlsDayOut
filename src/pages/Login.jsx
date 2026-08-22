@@ -39,7 +39,7 @@ export function Login() {
         <div className="login-header">
           <div className="login-brand">
             <div className="logo-mark-lg"></div>
-            <h1 className="font-serif">Dayflow</h1>
+            <h1 className="font-serif glitch-text" data-text="Dayflow">Dayflow</h1>
           </div>
           <p className="login-subtitle font-mono uppercase text-xs text-muted mt-2">
             System Access Terminal
