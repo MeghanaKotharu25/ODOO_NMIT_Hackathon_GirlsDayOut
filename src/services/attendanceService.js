@@ -126,6 +126,27 @@ export const attendanceService = {
     return data || [];
   },
 
+  getMonthlyHistory: async (employeeId, month) => {
+    if (!isSupabaseConfigured) return [];
+    const [year, monthNumber] = month.split('-').map(Number);
+    const lastDay = new Date(year, monthNumber, 0).getDate();
+    const { data, error } = await supabase
+      .from('attendance')
+      .select('*')
+      .eq('employee_id', employeeId)
+      .gte('date', `${month}-01`)
+      .lte('date', `${month}-${String(lastDay).padStart(2, '0')}`)
+      .order('date', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  },
+
+  calculatePayableDays: (records) => records.reduce((days, record) => {
+    if (record.status === 'present') return days + 1;
+    if (record.status === 'half_day') return days + 0.5;
+    return days;
+  }, 0),
+
   getAdminAttendance: async (date = attendanceService.getLocalDate()) => {
     if (!isSupabaseConfigured) return [];
     const [{ data: profiles, error: profilesError }, { data: attendance, error: attendanceError }] = await Promise.all([
@@ -170,7 +191,7 @@ export const attendanceService = {
   // Get all attendance records for today (admin view)
   getAllTodayAttendance: async () => {
     if (!isSupabaseConfigured) return [];
-    const today = new Date().toISOString().split('T')[0];
+    const today = attendanceService.getLocalDate();
     const { data, error } = await supabase
       .from('attendance')
       .select(`
@@ -191,7 +212,7 @@ export const attendanceService = {
   // Check in for an employee
   checkIn: async (employeeUuid) => {
     if (!isSupabaseConfigured) throw new Error('Supabase not configured');
-    const today = new Date().toISOString().split('T')[0];
+    const today = attendanceService.getLocalDate();
     const now = new Date().toISOString();
 
     const { data, error } = await supabase

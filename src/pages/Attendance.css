@@ -218,6 +218,27 @@
   margin-top: var(--spacing-4);
 }
 
+.attendance-history-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  margin-top: calc(var(--spacing-8) * -1);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.attendance-history-controls input {
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.attendance-history-controls span {
+  margin-left: auto;
+}
+
 .divider-label {
   font-size: 0.75rem;
   text-transform: uppercase;
@@ -295,5 +316,15 @@
 
   .attendance-actions .btn-action {
     flex: 1;
+  }
+
+  .attendance-history-controls {
+    align-items: flex-start;
+    flex-direction: column;
+    margin-top: calc(var(--spacing-8) * -1);
+  }
+
+  .attendance-history-controls span {
+    margin-left: 0;
   }
 }

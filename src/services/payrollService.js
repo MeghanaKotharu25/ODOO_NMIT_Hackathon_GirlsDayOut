@@ -1,6 +1,14 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { attendanceService } from './attendanceService';
 
 export const payrollService = {
+  getPayableDays: async (employeeId, year, month) => {
+    if (!isSupabaseConfigured) return 0;
+    const monthValue = `${year}-${String(month).padStart(2, '0')}`;
+    const records = await attendanceService.getMonthlyHistory(employeeId, monthValue);
+    return attendanceService.calculatePayableDays(records);
+  },
+
   // Get all payroll records (admin) or own payroll (employee)
   getPayrollRecords: async (employeeId = null) => {
     if (!isSupabaseConfigured) return [];

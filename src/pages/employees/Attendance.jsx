@@ -9,7 +9,11 @@ const formatTime = (value) => {
   return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
-const formatDuration = (checkIn, checkOut) => {
+const formatDuration = (checkIn, checkOut, workHours) => {
+  if (typeof workHours === 'number') {
+    const minutes = Math.round(workHours * 60);
+    return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`;
+  }
   if (!checkIn) return '--';
   const duration = Math.max(0, new Date(checkOut || Date.now()) - new Date(checkIn));
   const minutes = Math.floor(duration / 60000);
@@ -22,6 +26,7 @@ export default function Attendance() {
   const { user } = useAuth();
   const [todayRecord, setTodayRecord] = useState(null);
   const [history, setHistory] = useState([]);
+  const [selectedMonth, setSelectedMonth] = useState(attendanceService.getLocalDate().slice(0, 7));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -34,15 +39,14 @@ export default function Attendance() {
 
   useEffect(() => {
     if (user?.id) loadAttendanceData();
-  }, [user]);
+  }, [user, selectedMonth]);
 
   const loadAttendanceData = async () => {
-    const date = attendanceService.getLocalDate();
     try {
       setError('');
       const [todayData, historyData] = await Promise.all([
         attendanceService.getTodayRecord(user.id),
-        attendanceService.getHistory(user.id, 30),
+        attendanceService.getMonthlyHistory(user.id, selectedMonth),
       ]);
 
       setTodayRecord(todayData);
@@ -112,7 +116,7 @@ export default function Attendance() {
         </div>
         <div className="summary-card">
           <span className="summary-label font-mono">Total hours worked</span>
-          <strong>{formatDuration(todayRecord?.check_in, todayRecord?.check_out)}</strong>
+          <strong>{formatDuration(todayRecord?.check_in, todayRecord?.check_out || currentTime, todayRecord?.work_hours)}</strong>
         </div>
         <div className="summary-card">
           <span className="summary-label font-mono">Current status</span>
@@ -125,6 +129,12 @@ export default function Attendance() {
       <div className="section-divider">
         <span className="divider-label font-mono">Attendance history</span>
         <div className="divider-line"></div>
+      </div>
+
+      <div className="attendance-history-controls">
+        <label className="font-mono" htmlFor="attendance-month">Review month</label>
+        <input id="attendance-month" type="month" value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value)} />
+        <span className="font-mono text-muted">Payable days: {attendanceService.calculatePayableDays(history)}</span>
       </div>
 
       <section className="attendance-history">
