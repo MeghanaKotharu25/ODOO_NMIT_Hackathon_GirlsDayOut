@@ -38,11 +38,16 @@ CREATE TABLE IF NOT EXISTS public.employee_private_info (
     nationality TEXT,
     personal_email TEXT,
     phone_number TEXT,
+    residing_address TEXT,
+    marital_status TEXT,
     emergency_contact_name TEXT,
     emergency_contact_relationship TEXT,
     emergency_contact_phone TEXT,
     bank_name TEXT,
     account_number TEXT,
+    ifsc_code TEXT,
+    pan_no TEXT,
+    uan_no TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -152,6 +157,29 @@ CREATE TABLE IF NOT EXISTS public.salary_components (
 );
 
 -- ------------------------------------------
+-- 8B. EMPLOYEE SALARY CONFIG
+-- Stores the salary structure configuration for auto-calculation
+-- ------------------------------------------
+CREATE TABLE IF NOT EXISTS public.employee_salary_info (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    employee_id UUID UNIQUE NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    monthly_wage NUMERIC(12, 2) NOT NULL DEFAULT 0,
+    yearly_wage NUMERIC(12, 2) NOT NULL DEFAULT 0,
+    working_days_per_week NUMERIC(4, 2) DEFAULT 5,
+    break_time_hrs NUMERIC(4, 2) DEFAULT 1,
+    basic_percentage NUMERIC(5, 2) DEFAULT 50,
+    hra_percentage_of_basic NUMERIC(5, 2) DEFAULT 50,
+    standard_allowance_percentage NUMERIC(5, 2) DEFAULT 16.67,
+    performance_bonus_percentage NUMERIC(5, 2) DEFAULT 8.33,
+    lta_percentage NUMERIC(5, 2) DEFAULT 8.33,
+    pf_employee_percentage NUMERIC(5, 2) DEFAULT 12,
+    pf_employer_percentage NUMERIC(5, 2) DEFAULT 12,
+    professional_tax NUMERIC(10, 2) DEFAULT 200,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ------------------------------------------
 -- 9. ACTIVITY LOGS
 -- Audit logging for admin and employee actions
 -- ------------------------------------------
@@ -176,6 +204,7 @@ CREATE INDEX IF NOT EXISTS idx_leave_requests_reviewed_by ON public.leave_reques
 CREATE INDEX IF NOT EXISTS idx_payroll_employee_period ON public.payroll(employee_id, year, month);
 CREATE INDEX IF NOT EXISTS idx_salary_components_payroll ON public.salary_components(payroll_id);
 CREATE INDEX IF NOT EXISTS idx_employee_private_info_employee ON public.employee_private_info(employee_id);
+CREATE INDEX IF NOT EXISTS idx_employee_salary_info_employee ON public.employee_salary_info(employee_id);
 CREATE INDEX IF NOT EXISTS idx_employee_resumes_employee ON public.employee_resumes(employee_id);
 CREATE INDEX IF NOT EXISTS idx_activity_logs_employee ON public.activity_logs(employee_id);
 
@@ -222,6 +251,10 @@ CREATE TRIGGER update_salary_components_modtime
     BEFORE UPDATE ON public.salary_components
     FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
+CREATE TRIGGER update_employee_salary_info_modtime
+    BEFORE UPDATE ON public.employee_salary_info
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
 -- ==========================================
 -- AUTOMATIC PROFILE CREATION TRIGGER
 -- ==========================================
@@ -259,6 +292,7 @@ ALTER TABLE public.leave_balances ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.leave_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payroll ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.salary_components ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.employee_salary_info ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.activity_logs ENABLE ROW LEVEL SECURITY;
 
 -- Profiles: Anyone can view profiles, but only users themselves (or admin) can update their own
@@ -277,6 +311,19 @@ CREATE POLICY "Users can update own profile."
 -- Private Info: Only the user themselves can view/update their own private info
 CREATE POLICY "Users can view own private info."
     ON public.employee_private_info FOR SELECT
+    USING (employee_id IN (SELECT id FROM public.profiles WHERE id = auth.uid()));
+
+CREATE POLICY "Users can update own private info."
+    ON public.employee_private_info FOR UPDATE
+    USING (employee_id IN (SELECT id FROM public.profiles WHERE id = auth.uid()));
+
+CREATE POLICY "Users can insert own private info."
+    ON public.employee_private_info FOR INSERT
+    WITH CHECK (employee_id IN (SELECT id FROM public.profiles WHERE id = auth.uid()));
+
+-- Salary Info: Admins can view/update all. Employees can view their own.
+CREATE POLICY "Users can view own salary info."
+    ON public.employee_salary_info FOR SELECT
     USING (employee_id IN (SELECT id FROM public.profiles WHERE id = auth.uid()));
 
 -- Admins can do everything (Bypassed via Service Role Key usually, but explicit policies can be added here)

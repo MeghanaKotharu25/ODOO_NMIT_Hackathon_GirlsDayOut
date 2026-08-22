@@ -174,12 +174,13 @@ export function Employees() {
           {filteredEmployees.map((emp, index) => (
             <motion.div 
               key={emp.id} 
-              className="roster-card"
-              onClick={() => navigate(`/employees/${emp.uuid || emp.id}`)}
+              className={`roster-card ${isAdmin ? 'is-admin' : ''}`}
+              onClick={() => isAdmin && navigate(`/employees/${emp.uuid || emp.id}`)}
+              style={{ cursor: isAdmin ? 'pointer' : 'default' }}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
-              whileHover={{ y: -4, transition: { duration: 0.2, ease: "easeOut" } }}
+              whileHover={isAdmin ? { y: -4, transition: { duration: 0.2, ease: "easeOut" } } : {}}
             >
               <div className="roster-image-container">
                 <img src={emp.avatarUrl} alt={emp.firstName} className="roster-avatar" />

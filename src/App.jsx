@@ -44,7 +44,7 @@ function App() {
           <Route index element={<Navigate to="/employees" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="employees" element={<Employees />} />
-          <Route path="employees/:id" element={<EmployeeDetails />} />
+          <Route path="employees/:id" element={<RoleProtectedRoute><EmployeeDetails /></RoleProtectedRoute>} />
           <Route path="attendance" element={<Attendance />} />
           <Route path="admin/attendance" element={<RoleProtectedRoute><AdminAttendance /></RoleProtectedRoute>} />
           <Route path="time-off" element={<TimeOff />} />
