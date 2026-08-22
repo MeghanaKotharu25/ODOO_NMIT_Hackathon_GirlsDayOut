@@ -1,26 +1,38 @@
 import { useState } from 'react';
-import { Plus, X, Upload } from 'lucide-react';
-import { mockEmployees, mockCurrentUser } from '../data/mockData';
+import { Calendar as CalendarIcon, CheckCircle2, XCircle, Clock, Plus, X, Upload } from 'lucide-react';
+import { mockEmployees } from '../data/mockData';
 import { useToast } from '../context/ToastContext';
 import './TimeOff.css';
 
 export function TimeOff() {
-  const isAdmin = mockCurrentUser?.role === 'ADMIN' || mockCurrentUser?.role === 'HR';
+  const isAdmin = true; // Hardcoded for demo — Elena is HR Director
   const { addToast } = useToast();
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [newRequest, setNewRequest] = useState({ type: 'Paid Time Off', start: '', end: '', allocation: '01.00', file: null });
+  const [newRequest, setNewRequest] = useState({ type: 'Paid Time Off', start: '', end: '', reason: '', allocation: '01.00' });
   const [fileName, setFileName] = useState('');
 
+  // Mock pending requests (Admin view) made stateful
   const [pendingRequests, setPendingRequests] = useState([
-    { id: 1, employee: mockEmployees[1], type: 'Paid time Off', start: '28/10/2025', end: '28/10/2025', status: 'Pending' },
-    { id: 2, employee: mockEmployees[6], type: 'Sick Leave', start: '24/10/2025', end: '25/10/2025', status: 'Pending' },
+    { id: 1, employee: mockEmployees[1], type: 'Paid Time Off', start: '28/10/2025', end: '28/10/2025', duration: '1 day', reason: 'Family event' },
+    { id: 2, employee: mockEmployees[6], type: 'Sick Leave', start: '24/10/2025', end: '25/10/2025', duration: '2 days', reason: 'Flu symptoms' },
   ]);
+
+  // Mock leave balances
+  const leaveBalances = [
+    { type: 'Paid Time Off', total: 29, used: 12, pending: 4 },
+    { type: 'Sick Leave', total: 7, used: 2, pending: 0 },
+    { type: 'Unpaid Leave', total: 0, used: 0, pending: 0 }
+  ];
+
+  const getBalanceRemaining = (balance) => {
+    return balance.total - balance.used - balance.pending;
+  };
 
   const handleAction = (id, action) => {
     setPendingRequests(prev => prev.filter(req => req.id !== id));
     if (action === 'approve') {
-      addToast('Leave request approved.', 'success');
+      addToast('Leave request approved successfully.', 'success');
     } else {
       addToast('Leave request rejected.', 'error');
     }
@@ -28,25 +40,31 @@ export function TimeOff() {
 
   const handleRequestSubmit = (e) => {
     e.preventDefault();
-    if (!newRequest.start || !newRequest.end) {
+    if (!newRequest.start || !newRequest.end || !newRequest.reason) {
       addToast('Please fill out all request details.', 'error');
       return;
     }
+    
+    const startD = new Date(newRequest.start);
+    const endD = new Date(newRequest.end);
+    const diffTime = Math.abs(endD - startD);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
     const mockNewRequest = {
       id: Date.now(),
-      employee: mockCurrentUser,
+      employee: mockEmployees[2],
       type: newRequest.type,
-      start: newRequest.start,
-      end: newRequest.end,
-      status: 'Pending'
+      start: startD.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      end: endD.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      duration: `${diffDays} days`,
+      reason: newRequest.reason
     };
 
     setPendingRequests([mockNewRequest, ...pendingRequests]);
     setIsDrawerOpen(false);
-    setNewRequest({ type: 'Paid Time Off', start: '', end: '', allocation: '01.00', file: null });
+    setNewRequest({ type: 'Paid Time Off', start: '', end: '', reason: '', allocation: '01.00' });
     setFileName('');
-    addToast('Your time off request has been submitted.', 'success');
+    addToast('Your time off request has been submitted for approval.', 'success');
   };
 
   const handleFileChange = (e) => {
@@ -55,190 +73,217 @@ export function TimeOff() {
     }
   };
 
-  // Generate a mock calendar grid
-  const days = Array.from({ length: 35 }, (_, i) => i + 1);
-
   return (
-    <div className="timeoff-page bg-black text-white p-8 font-sans">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold">Time Off</h1>
-          <div className="flex gap-4 mt-4">
-            <span className="text-blue-400 cursor-pointer border-b-2 border-blue-400 pb-1">Time Off</span>
-            {isAdmin && <span className="text-gray-400 cursor-pointer">Allocation</span>}
+    <div className="timeoff-page">
+      <header className="page-header">
+        <div className="header-content">
+          <div>
+            <h1 className="page-title">Time Off</h1>
+            <p className="text-muted">Manage leave balances and requests</p>
+          </div>
+          <button className="btn btn-primary" onClick={() => setIsDrawerOpen(true)}>
+            <Plus size={16} /> Request Time Off
+          </button>
+        </div>
+      </header>
+
+      <div className="timeoff-grid">
+        <div className="timeoff-main">
+          {/* Admin Review Interface */}
+          {isAdmin && (
+            <div className="card admin-review-card">
+              <h2 className="section-title">Pending Approvals</h2>
+              
+              {pendingRequests.length > 0 ? (
+                <div className="pending-list">
+                  {pendingRequests.map(req => (
+                    <div key={req.id} className="pending-request-item">
+                      <div className="req-header">
+                        <div className="req-emp-info">
+                          <img src={req.employee.avatarUrl} alt={req.employee.firstName} className="emp-avatar-sm" />
+                          <div>
+                            <span className="req-emp-name">{req.employee.firstName} {req.employee.lastName}</span>
+                            <span className="req-type badge badge-info ml-2">{req.type}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="req-details">
+                        <div className="req-detail-col">
+                          <span className="detail-label">When</span>
+                          <span className="detail-value flex-align">
+                            <CalendarIcon size={14} className="text-muted mr-1" />
+                            {req.start} to {req.end}
+                          </span>
+                        </div>
+                        <div className="req-detail-col">
+                          <span className="detail-label">Duration</span>
+                          <span className="detail-value">{req.duration}</span>
+                        </div>
+                        <div className="req-detail-col flex-2">
+                          <span className="detail-label">Reason</span>
+                          <span className="detail-value text-muted">"{req.reason}"</span>
+                        </div>
+                      </div>
+                      
+                      <div className="req-actions">
+                        <button 
+                          className="btn btn-secondary approve-btn"
+                          onClick={() => handleAction(req.id, 'approve')}
+                        >
+                          <CheckCircle2 size={16} /> Approve
+                        </button>
+                        <button 
+                          className="btn btn-secondary reject-btn"
+                          onClick={() => handleAction(req.id, 'reject')}
+                        >
+                          <XCircle size={16} /> Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted text-center py-6">No pending requests.</p>
+              )}
+            </div>
+          )}
+
+          {/* Request History */}
+          <div className="card mt-6">
+            <h2 className="section-title">{isAdmin ? 'Recent Approvals' : 'Request History'}</h2>
+            <div className="data-table-wrapper">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Date</th>
+                    <th>Duration</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span className="font-medium">Paid Leave</span></td>
+                    <td>Aug 15 - Aug 18, 2024</td>
+                    <td>4 days</td>
+                    <td><span className="badge badge-success">Approved</span></td>
+                  </tr>
+                  <tr>
+                    <td><span className="font-medium">Sick Leave</span></td>
+                    <td>Jul 10, 2024</td>
+                    <td>1 day</td>
+                    <td><span className="badge badge-success">Approved</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-        <button 
-          className="bg-pink-500 text-white px-6 py-2 rounded shadow flex items-center gap-2 hover:bg-pink-600 transition"
-          onClick={() => setIsDrawerOpen(true)}
-        >
-           NEW
-        </button>
+
+        <div className="timeoff-sidebar">
+          <div className="card balances-card">
+            <h2 className="section-title">Your Balances</h2>
+            <div className="balances-list">
+              {leaveBalances.map((balance, index) => {
+                const remaining = getBalanceRemaining(balance);
+                const percentRemaining = balance.total > 0 ? (remaining / balance.total) * 100 : 0;
+                
+                return (
+                  <div key={index} className="balance-item">
+                    <div className="balance-header">
+                      <span className="balance-type">{balance.type}</span>
+                      <span className="balance-remaining"><strong>{remaining}</strong> {balance.type === 'Unpaid Leave' ? 'used' : 'left'}</span>
+                    </div>
+                    
+                    {balance.total > 0 && (
+                      <>
+                        <div className="progress-bar-container">
+                          <div className="progress-bar-fill" style={{ width: `${percentRemaining}%`, backgroundColor: balance.type === 'Sick Leave' ? '#f59e0b' : 'var(--accent)' }}></div>
+                        </div>
+                        <div className="balance-footer">
+                          <span className="text-xs text-muted">Total: {balance.total} days</span>
+                          {balance.pending > 0 && <span className="text-xs text-muted flex-align"><Clock size={12} className="mr-1" /> {balance.pending} pending</span>}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </div>
 
-      {!isAdmin ? (
-        <div className="employee-calendar-view mt-6 border border-gray-800 p-4 rounded bg-[#0a0a0a]">
-          <div className="flex justify-between border-b border-gray-800 pb-4 mb-4">
-            <div className="text-center w-1/2 border-r border-gray-800">
-              <h3 className="text-blue-400 font-semibold">Paid time Off</h3>
-              <p className="text-xs text-gray-400">29 Days Available</p>
-            </div>
-            <div className="text-center w-1/2">
-              <h3 className="text-blue-400 font-semibold">Sick time off</h3>
-              <p className="text-xs text-gray-400">07 Days Available</p>
-            </div>
-          </div>
-          
-          <div className="calendar-mock grid grid-cols-7 gap-2 p-4 text-xs text-gray-400">
-            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
-              <div key={d} className="text-center font-bold">{d}</div>
-            ))}
-            {days.map(d => {
-              const isPaid = d === 14 || d === 15;
-              const isSick = d === 22;
-              return (
-                <div key={d} className="aspect-square flex items-center justify-center relative">
-                  <span className={`w-6 h-6 flex items-center justify-center rounded-full ${
-                    isPaid ? 'bg-blue-500/20 text-blue-400 border border-blue-500' : 
-                    isSick ? 'bg-red-500/20 text-red-400 border border-red-500' : 
-                    'hover:bg-gray-800 cursor-pointer'
-                  }`}>
-                    {d <= 30 ? d : d - 30}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ) : (
-        <div className="admin-table-view mt-6">
-          <div className="flex justify-between mb-4 bg-[#111] p-3 rounded items-center border border-gray-800">
-            <div className="flex gap-8">
-              <div className="text-center">
-                <span className="text-blue-400 block text-sm font-semibold">Paid time Off</span>
-                <span className="text-xs text-gray-500">29 Days Available</span>
-              </div>
-              <div className="text-center">
-                <span className="text-blue-400 block text-sm font-semibold">Sick time off</span>
-                <span className="text-xs text-gray-500">07 Days Available</span>
-              </div>
-            </div>
-          </div>
-
-          <table className="w-full text-left border-collapse border border-gray-800 bg-[#0a0a0a]">
-            <thead>
-              <tr className="border-b border-gray-800 text-sm">
-                <th className="p-3 border-r border-gray-800">Name</th>
-                <th className="p-3 border-r border-gray-800">Start Date</th>
-                <th className="p-3 border-r border-gray-800">End Date</th>
-                <th className="p-3 border-r border-gray-800">Time off Type</th>
-                <th className="p-3">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pendingRequests.map(req => (
-                <tr key={req.id} className="border-b border-gray-800 text-sm hover:bg-gray-900 transition">
-                  <td className="p-3 border-r border-gray-800 font-mono">[{req.employee.firstName} {req.employee.lastName}]</td>
-                  <td className="p-3 border-r border-gray-800 font-mono">{req.start}</td>
-                  <td className="p-3 border-r border-gray-800 font-mono">{req.end}</td>
-                  <td className="p-3 border-r border-gray-800 text-blue-400">{req.type}</td>
-                  <td className="p-3 flex gap-2">
-                    <button 
-                      onClick={() => handleAction(req.id, 'reject')}
-                      className="w-5 h-5 bg-red-500 rounded-sm hover:bg-red-600 transition"
-                      title="Reject"
-                    />
-                    <button 
-                      onClick={() => handleAction(req.id, 'approve')}
-                      className="w-5 h-5 bg-green-500 rounded-sm hover:bg-green-600 transition"
-                      title="Approve"
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="mt-8 p-4 border border-gray-800 bg-[#111] rounded-lg">
-            <h3 className="font-mono text-yellow-500 mb-2">Note</h3>
-            <p className="text-sm text-gray-400">Employees can view only their own time off records, while Admins and HR Officers can view time off records & approve/reject them for all employees.</p>
-          </div>
-        </div>
-      )}
-
-      {/* Request Leave Modal (Drawer style) */}
+      {/* Request Leave Drawer */}
       <div className={`drawer-overlay ${isDrawerOpen ? 'open' : ''}`} onClick={() => setIsDrawerOpen(false)}></div>
-      <div className={`fixed right-0 top-0 h-full w-[400px] bg-[#111] border-l border-gray-800 shadow-2xl transition-transform duration-300 ${isDrawerOpen ? 'translate-x-0' : 'translate-x-full'} z-50`}>
-        <div className="flex justify-between items-center p-4 border-b border-gray-800">
-          <h2 className="text-lg">Time off Type Request</h2>
-          <button onClick={() => setIsDrawerOpen(false)} className="text-gray-400 hover:text-white"><X size={20}/></button>
+      <div className={`drawer ${isDrawerOpen ? 'open' : ''}`}>
+        <div className="drawer-header">
+          <h2 className="font-serif text-xl">Request Time Off</h2>
+          <button className="icon-btn" onClick={() => setIsDrawerOpen(false)}>
+            <X size={20} />
+          </button>
         </div>
         
-        <form className="p-6 flex flex-col gap-6" onSubmit={handleRequestSubmit}>
-          <div className="flex items-center">
-            <label className="w-1/3 text-sm text-gray-400">Employee</label>
-            <div className="w-2/3 text-blue-400 font-mono">[{mockCurrentUser.firstName} {mockCurrentUser.lastName}]</div>
-          </div>
-
-          <div className="flex items-center">
-            <label className="w-1/3 text-sm text-gray-400">Time off Type</label>
+        <form className="drawer-body" onSubmit={handleRequestSubmit}>
+          <div className="form-group">
+            <label className="form-label font-mono uppercase text-xs">Leave Type</label>
             <select 
-              className="w-2/3 bg-transparent border border-gray-700 text-blue-400 p-2 rounded focus:outline-none focus:border-blue-500"
+              className="form-input"
               value={newRequest.type}
               onChange={(e) => setNewRequest({...newRequest, type: e.target.value})}
             >
-              <option value="Paid Time Off" className="bg-black">Paid Time off</option>
-              <option value="Sick Leave" className="bg-black">Sick Leave</option>
-              <option value="Unpaid Leaves" className="bg-black">Unpaid Leaves</option>
+              <option value="Paid Time Off">Paid Time Off</option>
+              <option value="Sick Leave">Sick Leave</option>
+              <option value="Unpaid Leave">Unpaid Leave</option>
             </select>
           </div>
-
-          <div className="flex items-center">
-            <label className="w-1/3 text-sm text-gray-400">Validity Period</label>
-            <div className="w-2/3 flex items-center gap-2">
-              <input 
-                type="date" 
-                className="bg-transparent text-blue-400 border-none outline-none text-sm w-full"
-                value={newRequest.start}
-                onChange={(e) => setNewRequest({...newRequest, start: e.target.value})}
-              />
-              <span className="text-gray-500">To</span>
-              <input 
-                type="date" 
-                className="bg-transparent text-blue-400 border-none outline-none text-sm w-full"
-                value={newRequest.end}
-                onChange={(e) => setNewRequest({...newRequest, end: e.target.value})}
-              />
-            </div>
+          
+          <div className="form-group">
+            <label className="form-label font-mono uppercase text-xs">Start Date</label>
+            <input 
+              type="date" 
+              className="form-input" 
+              value={newRequest.start}
+              onChange={(e) => setNewRequest({...newRequest, start: e.target.value})}
+            />
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label font-mono uppercase text-xs">End Date</label>
+            <input 
+              type="date" 
+              className="form-input" 
+              value={newRequest.end}
+              onChange={(e) => setNewRequest({...newRequest, end: e.target.value})}
+            />
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label font-mono uppercase text-xs">Reason</label>
+            <textarea 
+              className="form-input" 
+              rows="3"
+              value={newRequest.reason}
+              onChange={(e) => setNewRequest({...newRequest, reason: e.target.value})}
+            ></textarea>
           </div>
 
-          <div className="flex items-center">
-            <label className="w-1/3 text-sm text-gray-400">Allocation</label>
-            <div className="w-2/3 flex items-center gap-2">
-              <input 
-                type="text" 
-                className="bg-transparent text-blue-400 border border-gray-700 p-1 w-20 rounded text-center"
-                value={newRequest.allocation}
-                onChange={(e) => setNewRequest({...newRequest, allocation: e.target.value})}
-              />
-              <span className="text-gray-400 text-sm">Days</span>
-            </div>
-          </div>
-
-          <div className="flex items-start">
-            <label className="w-1/3 text-sm text-gray-400 pt-2">Attachment</label>
-            <div className="w-2/3">
-              <label className="cursor-pointer inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition shadow-lg">
-                <Upload size={14} />
-                <input type="file" className="hidden" onChange={handleFileChange} />
+          <div className="form-group">
+            <label className="form-label font-mono uppercase text-xs">Attachment</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <label className="btn btn-secondary" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Upload size={14} /> Choose File
+                <input type="file" style={{ display: 'none' }} onChange={handleFileChange} />
               </label>
-              <span className="text-xs text-gray-500 ml-3">(For sick leave certificate)</span>
-              {fileName && <div className="mt-2 text-xs text-green-400 truncate w-full">{fileName}</div>}
+              <span className="text-muted" style={{ fontSize: '0.75rem' }}>{fileName || '(For sick leave certificate)'}</span>
             </div>
           </div>
           
-          <div className="flex gap-4 mt-8">
-            <button type="submit" className="bg-pink-500 text-white px-6 py-2 rounded shadow hover:bg-pink-600 transition">Submit</button>
-            <button type="button" onClick={() => setIsDrawerOpen(false)} className="text-gray-400 hover:text-white px-4">Discard</button>
+          <div className="drawer-footer mt-auto pt-6 border-t border-[var(--border-strong)]">
+            <button type="submit" className="btn-primary w-full py-3 justify-center">
+              Submit Request
+            </button>
           </div>
         </form>
       </div>
