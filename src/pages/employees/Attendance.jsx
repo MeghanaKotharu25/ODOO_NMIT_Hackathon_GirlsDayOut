@@ -1,14 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { supabase } from '../../lib/supabase';
+import { attendanceService } from '../../services/attendanceService';
 import { Clock, LogIn, LogOut, CheckCircle2, AlertCircle } from 'lucide-react';
 import '../Attendance.css';
-
-const getLocalDate = () => {
-  const now = new Date();
-  const offset = now.getTimezoneOffset() * 60000;
-  return new Date(now.getTime() - offset).toISOString().slice(0, 10);
-};
 
 const formatTime = (value) => {
   if (!value) return '--';
@@ -43,27 +37,16 @@ export default function Attendance() {
   }, [user]);
 
   const loadAttendanceData = async () => {
-    const date = getLocalDate();
+    const date = attendanceService.getLocalDate();
     try {
       setError('');
-      const { data: todayData, error: todayError } = await supabase
-        .from('attendance')
-        .select('*')
-        .eq('employee_id', user.id)
-        .eq('date', date)
-        .maybeSingle();
-      if (todayError) throw todayError;
-      
-      const { data: historyData, error: historyError } = await supabase
-        .from('attendance')
-        .select('*')
-        .eq('employee_id', user.id)
-        .order('date', { ascending: false })
-        .limit(30);
-      if (historyError) throw historyError;
+      const [todayData, historyData] = await Promise.all([
+        attendanceService.getTodayRecord(user.id),
+        attendanceService.getHistory(user.id, 30),
+      ]);
 
       setTodayRecord(todayData);
-      setHistory(historyData || []);
+      setHistory(historyData);
     } catch (err) {
       console.error('Unable to load attendance:', err);
       setError('Unable to load attendance records. Please try again.');
@@ -73,28 +56,24 @@ export default function Attendance() {
   const handleCheckIn = async () => {
     setLoading(true);
     setError('');
-    const { error: insertError } = await supabase.from('attendance').insert({
-      employee_id: user.id,
-      date: getLocalDate(),
-      check_in: new Date().toISOString(),
-      status: 'present',
-    });
-    if (insertError) setError(insertError.message);
-    else await loadAttendanceData();
+    try {
+      await attendanceService.checkIn(user.id);
+      await loadAttendanceData();
+    } catch (insertError) {
+      setError(insertError.message);
+    }
     setLoading(false);
   };
 
   const handleCheckOut = async () => {
     setLoading(true);
     setError('');
-    const { error: updateError } = await supabase
-      .from('attendance')
-      .update({ check_out: new Date().toISOString() })
-      .eq('employee_id', user.id)
-      .eq('date', getLocalDate())
-      .is('check_out', null);
-    if (updateError) setError(updateError.message);
-    else await loadAttendanceData();
+    try {
+      await attendanceService.checkOut(user.id);
+      await loadAttendanceData();
+    } catch (updateError) {
+      setError(updateError.message);
+    }
     setLoading(false);
   };
 

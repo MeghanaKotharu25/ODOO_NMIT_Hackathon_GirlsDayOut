@@ -1,28 +1,18 @@
 import { useEffect, useState } from 'react';
 import { AlertCircle, CalendarDays, Save } from 'lucide-react';
-import { useAuth } from '../../../context/AuthContext';
-import { supabase } from '../../../lib/supabase';
+import { attendanceService } from '../../../services/attendanceService';
 import './Attendance.css';
 
 const statuses = ['present', 'absent', 'half_day', 'leave'];
 
-const getLocalDate = () => {
-  const now = new Date();
-  const offset = now.getTimezoneOffset() * 60000;
-  return new Date(now.getTime() - offset).toISOString().slice(0, 10);
-};
-
 const toInputTime = (value) => value ? new Date(value).toTimeString().slice(0, 5) : '';
-
-const toTimestamp = (date, time) => time ? new Date(`${date}T${time}:00`).toISOString() : null;
 
 const formatTime = (value) => value
   ? new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   : '--';
 
 export default function Attendance() {
-  const { user } = useAuth();
-  const [selectedDate, setSelectedDate] = useState(getLocalDate());
+  const [selectedDate, setSelectedDate] = useState(attendanceService.getLocalDate());
   const [records, setRecords] = useState([]);
   const [drafts, setDrafts] = useState({});
   const [loading, setLoading] = useState(false);
@@ -37,31 +27,7 @@ export default function Attendance() {
     setLoading(true);
     setError('');
     try {
-      const [{ data: profiles, error: profilesError }, { data: attendance, error: attendanceError }] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select('id, employee_code, first_name, last_name, email, department, position')
-          .order('employee_code', { ascending: true }),
-        supabase
-          .from('attendance')
-          .select('id, employee_id, date, check_in, check_out, status')
-          .eq('date', selectedDate),
-      ]);
-
-      if (profilesError) throw profilesError;
-      if (attendanceError) throw attendanceError;
-
-      const attendanceByEmployee = new Map((attendance || []).map((record) => [record.employee_id, record]));
-      const rows = (profiles || []).map((profile) => {
-        const record = attendanceByEmployee.get(profile.id);
-        return {
-          profile,
-          record,
-          status: record?.status || 'absent',
-          checkIn: record?.check_in || '',
-          checkOut: record?.check_out || '',
-        };
-      });
+      const rows = await attendanceService.getAdminAttendance(selectedDate);
 
       setRecords(rows);
       setDrafts(Object.fromEntries(rows.map((row) => [row.profile.id, {
@@ -89,17 +55,7 @@ export default function Attendance() {
     setSavingId(row.profile.id);
     setError('');
 
-    const payload = {
-      employee_id: row.profile.id,
-      date: selectedDate,
-      status: draft.status,
-      check_in: toTimestamp(selectedDate, draft.checkIn),
-      check_out: toTimestamp(selectedDate, draft.checkOut),
-    };
-
-    const result = row.record
-      ? await supabase.from('attendance').update(payload).eq('id', row.record.id)
-      : await supabase.from('attendance').insert(payload);
+    const result = await attendanceService.saveAdminRecord(row, selectedDate, draft);
 
     if (result.error) setError(result.error.message);
     else await loadAttendance();

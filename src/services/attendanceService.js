@@ -1,10 +1,16 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 export const attendanceService = {
+  getLocalDate: () => {
+    const now = new Date();
+    const offset = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - offset).toISOString().slice(0, 10);
+  },
+
   // Get today's attendance record for a specific employee
   getTodayRecord: async (employeeId) => {
     if (!isSupabaseConfigured) return null;
-    const today = new Date().toISOString().split('T')[0];
+    const today = attendanceService.getLocalDate();
     const { data, error } = await supabase
       .from('attendance')
       .select('*')
@@ -32,6 +38,47 @@ export const attendanceService = {
       throw error;
     }
     return data || [];
+  },
+
+  getAdminAttendance: async (date = attendanceService.getLocalDate()) => {
+    if (!isSupabaseConfigured) return [];
+    const [{ data: profiles, error: profilesError }, { data: attendance, error: attendanceError }] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('id, employee_code, first_name, last_name, email, department, position')
+        .order('employee_code', { ascending: true }),
+      supabase
+        .from('attendance')
+        .select('id, employee_id, date, check_in, check_out, status')
+        .eq('date', date),
+    ]);
+    if (profilesError) throw profilesError;
+    if (attendanceError) throw attendanceError;
+
+    const attendanceByEmployee = new Map((attendance || []).map((record) => [record.employee_id, record]));
+    return (profiles || []).map((profile) => {
+      const record = attendanceByEmployee.get(profile.id);
+      return {
+        profile,
+        record,
+        status: record?.status || 'absent',
+        checkIn: record?.check_in || '',
+        checkOut: record?.check_out || '',
+      };
+    });
+  },
+
+  saveAdminRecord: async (row, date, draft) => {
+    const payload = {
+      employee_id: row.profile.id,
+      date,
+      status: draft.status,
+      check_in: draft.checkIn ? new Date(`${date}T${draft.checkIn}:00`).toISOString() : null,
+      check_out: draft.checkOut ? new Date(`${date}T${draft.checkOut}:00`).toISOString() : null,
+    };
+    return row.record
+      ? supabase.from('attendance').update(payload).eq('id', row.record.id)
+      : supabase.from('attendance').insert(payload);
   },
 
   // Get all attendance records for today (admin view)
