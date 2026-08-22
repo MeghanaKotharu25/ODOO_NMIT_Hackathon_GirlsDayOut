@@ -5,6 +5,45 @@ export const authService = {
   signUp: async (email, password, metadata = {}) => {
     if (!isSupabaseConfigured) throw new Error('Demo mode: Supabase not configured');
     const cleanEmail = (email || '').trim().toLowerCase();
+
+    // 1. Attempt to provision confirmed HR/Admin account via the backend create-employee function
+    try {
+      const { data: edgeData, error: edgeError } = await supabase.functions.invoke('create-employee', {
+        body: {
+          isRegistration: true,
+          role: 'admin',
+          email: cleanEmail,
+          password: password,
+          firstName: metadata.first_name || 'Admin',
+          lastName: metadata.last_name || 'User',
+          phone: metadata.phone || '',
+          companyName: metadata.company_name || 'Dayflow',
+          department: 'Human Resources',
+          position: 'HR Administrator'
+        }
+      });
+
+      if (!edgeError && edgeData?.success) {
+        // Automatically sign in to establish an immediate valid authenticated session
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password: password,
+        });
+
+        if (!signInError && signInData?.session) {
+          return signInData;
+        }
+
+        return { user: edgeData.user, session: null };
+      }
+      if (edgeError) {
+        console.warn('Edge function HR registration returned error, falling back:', edgeError);
+      }
+    } catch (edgeInvokeErr) {
+      console.warn('Edge function HR registration exception, falling back:', edgeInvokeErr);
+    }
+
+    // 2. Fallback to standard Supabase Auth signUp if Edge Function was not reachable
     const { data, error } = await supabase.auth.signUp({
       email: cleanEmail,
       password,

@@ -29,52 +29,57 @@ serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false }
     })
 
-    // 2. Validate Authenticated Caller (HR/Admin check)
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Unauthorized: Missing authorization header.' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
-      )
-    }
-
-    const token = authHeader.replace('Bearer ', '').trim()
-    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token)
-
-    if (userError || !userData?.user) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Unauthorized: Invalid or expired authentication session.' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
-      )
-    }
-
-    // Verify caller role in public.profiles table
-    const { data: callerProfile, error: profileCheckError } = await supabaseAdmin
-      .from('profiles')
-      .select('role, status')
-      .eq('id', userData.user.id)
-      .maybeSingle()
-
-    const callerRole = (callerProfile?.role || '').toLowerCase()
-    if (callerRole !== 'admin') {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Forbidden: Only HR / Admin accounts are authorized to create employees.' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
-      )
-    }
-
-    // 3. Parse and validate request body
+    // Parse request body
     const body = await req.json()
+    const isRegistration = body.isRegistration === true || body.action === 'register_admin'
+
+    // 2. Validate Authenticated Caller (unless public self-registration)
+    if (!isRegistration) {
+      const authHeader = req.headers.get('Authorization')
+      if (!authHeader) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Unauthorized: Missing authorization header.' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+        )
+      }
+
+      const token = authHeader.replace('Bearer ', '').trim()
+      const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token)
+
+      if (userError || !userData?.user) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Unauthorized: Invalid or expired authentication session.' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+        )
+      }
+
+      // Verify caller role in public.profiles table
+      const { data: callerProfile, error: profileCheckError } = await supabaseAdmin
+        .from('profiles')
+        .select('role, status')
+        .eq('id', userData.user.id)
+        .maybeSingle()
+
+      const callerRole = (callerProfile?.role || '').toLowerCase()
+      if (callerRole !== 'admin') {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Forbidden: Only HR / Admin accounts are authorized to create employees.' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+        )
+      }
+    }
+
     const {
       email,
       firstName,
       lastName = '',
-      position = 'Employee',
-      department = 'General',
+      position = isRegistration ? 'HR Manager' : 'Employee',
+      department = isRegistration ? 'Human Resources' : 'General',
       companyName = 'Odoo India',
       defaultInTime = '09:00',
       defaultOutTime = '17:30',
-      joinDate
+      joinDate,
+      role = isRegistration ? 'admin' : 'employee'
     } = body
 
     if (!email || !firstName) {
@@ -152,7 +157,7 @@ serve(async (req) => {
         last_name: cleanLastName,
         full_name: `${cleanFirstName} ${cleanLastName}`.trim(),
         employee_code: employeeCode,
-        role: 'employee'
+        role: role
       }
     })
 
@@ -178,7 +183,7 @@ serve(async (req) => {
         email: normalizedEmail,
         position,
         department,
-        role: 'employee',
+        role: role,
         status: 'active',
         join_date: joinDate || new Date().toISOString().split('T')[0],
         default_in_time: inTimeFormatted,
