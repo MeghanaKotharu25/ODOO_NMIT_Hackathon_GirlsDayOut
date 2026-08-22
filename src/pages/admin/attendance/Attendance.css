@@ -62,6 +62,46 @@
   font-size: 0.8rem;
 }
 
+.admin-list-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.admin-search {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+}
+
+.admin-search input {
+  width: 190px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.admin-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+}
+
+.admin-icon-button:hover {
+  background: var(--text-primary);
+  color: var(--bg-surface);
+}
+
 .admin-attendance-table .data-table td {
   vertical-align: middle;
 }
@@ -69,6 +109,10 @@
 .admin-attendance-table td strong,
 .admin-attendance-table td small {
   display: block;
+}
+
+.admin-attendance-table td small.extra-hours {
+  color: var(--status-warning);
 }
 
 .admin-attendance-table td small {
@@ -120,6 +164,24 @@
   }
 
   .admin-attendance-table .data-table {
-    min-width: 900px;
+    min-width: 1040px;
+  }
+
+  .admin-table-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-list-controls {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .admin-search {
+    flex: 1;
+  }
+
+  .admin-search input {
+    width: 100%;
   }
 }

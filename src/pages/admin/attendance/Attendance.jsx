@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AlertCircle, CalendarDays, Save } from 'lucide-react';
+import { AlertCircle, CalendarDays, ChevronLeft, ChevronRight, Search, Save } from 'lucide-react';
 import { attendanceService } from '../../../services/attendanceService';
 import './Attendance.css';
 
@@ -11,6 +11,24 @@ const formatTime = (value) => value
   ? new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   : '--';
 
+const formatHours = (row) => {
+  if (typeof row.workHours === 'number') {
+    return `${Math.floor(row.workHours)}h ${String(Math.round((row.workHours % 1) * 60)).padStart(2, '0')}m`;
+  }
+  if (!row.checkIn || !row.checkOut) return '--';
+  const minutes = Math.max(0, Math.floor((new Date(row.checkOut) - new Date(row.checkIn)) / 60000));
+  return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`;
+};
+
+const formatExtraHours = (row) => {
+  if (!row.checkIn || !row.checkOut) return '--';
+  const hours = typeof row.workHours === 'number'
+    ? row.workHours
+    : (new Date(row.checkOut) - new Date(row.checkIn)) / 3600000;
+  const extraMinutes = Math.max(0, Math.round((hours - 8) * 60));
+  return `${Math.floor(extraMinutes / 60)}h ${String(extraMinutes % 60).padStart(2, '0')}m`;
+};
+
 export default function Attendance() {
   const [selectedDate, setSelectedDate] = useState(attendanceService.getLocalDate());
   const [records, setRecords] = useState([]);
@@ -18,6 +36,7 @@ export default function Attendance() {
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState(null);
   const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadAttendance();
@@ -62,6 +81,17 @@ export default function Attendance() {
     setSavingId(null);
   };
 
+  const shiftDate = (days) => {
+    const date = new Date(`${selectedDate}T00:00:00`);
+    date.setDate(date.getDate() + days);
+    setSelectedDate(date.toISOString().slice(0, 10));
+  };
+
+  const visibleRecords = records.filter(({ profile }) => {
+    const search = searchTerm.toLowerCase().trim();
+    return !search || `${profile.first_name} ${profile.last_name} ${profile.employee_code} ${profile.department || ''}`.toLowerCase().includes(search);
+  });
+
   return (
     <div className="admin-attendance-page">
       <header className="admin-attendance-header">
@@ -82,10 +112,14 @@ export default function Attendance() {
       <section className="admin-attendance-table card">
         <div className="admin-table-heading">
           <div>
-            <h2>{selectedDate}</h2>
-            <p className="text-muted">{records.length} employees in the register</p>
+            <h2>{new Date(`${selectedDate}T00:00:00`).toLocaleDateString([], { day: 'numeric', month: 'long', year: 'numeric' })}</h2>
+            <p className="text-muted">{visibleRecords.length} of {records.length} employees in the register</p>
           </div>
-          <CalendarDays size={20} aria-hidden="true" />
+          <div className="admin-list-controls">
+            <div className="admin-search"><Search size={16} /><input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Search employees" /></div>
+            <button type="button" className="admin-icon-button" title="Previous day" onClick={() => shiftDate(-1)}><ChevronLeft size={18} /></button>
+            <button type="button" className="admin-icon-button" title="Next day" onClick={() => shiftDate(1)}><ChevronRight size={18} /></button>
+          </div>
         </div>
         <div className="data-table-wrapper">
           <table className="data-table">
@@ -94,8 +128,8 @@ export default function Attendance() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="6" className="attendance-empty">Loading attendance records...</td></tr>
-              ) : records.length ? records.map((row) => (
+                <tr><td colSpan="7" className="attendance-empty">Loading attendance records...</td></tr>
+              ) : visibleRecords.length ? visibleRecords.map((row) => (
                 <tr key={row.profile.id}>
                   <td>
                     <strong>{row.profile.first_name} {row.profile.last_name}</strong>
@@ -104,6 +138,7 @@ export default function Attendance() {
                   <td>{row.profile.department || row.profile.position || 'Employee'}</td>
                   <td>{formatTime(row.checkIn)}</td>
                   <td>{formatTime(row.checkOut)}</td>
+                  <td className="font-mono">{formatHours(row)}<small className="extra-hours">+{formatExtraHours(row)} extra</small></td>
                   <td>
                     <select
                       className={`admin-status-select ${drafts[row.profile.id]?.status}`}
@@ -124,7 +159,7 @@ export default function Attendance() {
                   </td>
                 </tr>
               )) : (
-                <tr><td colSpan="6" className="attendance-empty">No employees found.</td></tr>
+                <tr><td colSpan="7" className="attendance-empty">No employees found.</td></tr>
               )}
             </tbody>
           </table>
