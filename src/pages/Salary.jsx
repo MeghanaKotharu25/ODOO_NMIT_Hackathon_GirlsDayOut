@@ -1,19 +1,36 @@
-import { useState } from 'react';
-import { Download, FileText, ChevronDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Download, FileText, ChevronDown, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { mockEmployees } from '../data/mockData';
+import { employeeService } from '../services/employeeService';
 import { useToast } from '../context/ToastContext';
 import './Salary.css';
 
 export function Salary() {
   const { user } = useAuth();
   const { addToast } = useToast();
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState(mockEmployees[0].id);
-  
+  const [employees, setEmployees] = useState([]);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+    employeeService.getEmployees()
+      .then(data => {
+        if (isMounted && data && data.length > 0) {
+          setEmployees(data);
+          setSelectedEmployeeId(data[0].id);
+        }
+      })
+      .catch(err => console.warn('Salary employees fetch error:', err))
+      .finally(() => { if (isMounted) setLoading(false); });
+    return () => { isMounted = false; };
+  }, []);
+
   // In a real app, this would be fetched based on the selected employee or current user
   const employee = user?.role === 'EMPLOYEE' 
-    ? mockEmployees.find(emp => emp.id === user.id)
-    : mockEmployees.find(emp => emp.id === selectedEmployeeId);
+    ? employees.find(emp => emp.id === user.id) || employees[0]
+    : employees.find(emp => emp.id === selectedEmployeeId) || employees[0];
 
   // Mock salary structure based on the employee's role/department
   const getSalaryStructure = (emp) => {
@@ -33,6 +50,16 @@ export function Salary() {
       base, hra, allowances, gross, tax, pf, deductions, net
     };
   };
+  if (loading || !employee) {
+    return (
+      <div className="financial-page">
+        <header className="financial-header"><h1 className="page-title">Financial Ledger</h1></header>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '2rem', color: 'var(--text-muted)' }}>
+          <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} /> Loading salary data...
+        </div>
+      </div>
+    );
+  }
 
   const salary = getSalaryStructure(employee);
   const formatCurrency = (amount) => `$${amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
@@ -51,7 +78,7 @@ export function Salary() {
                 onChange={(e) => setSelectedEmployeeId(e.target.value)}
                 className="font-mono"
               >
-                {mockEmployees.map(emp => (
+                {employees.map(emp => (
                   <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName} ({emp.id})</option>
                 ))}
               </select>

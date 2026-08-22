@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, MapPin, Briefcase, Calendar as CalendarIcon, Shield, FileText } from 'lucide-react';
-import { mockEmployees } from '../data/mockData';
+import { ArrowLeft, Mail, Phone, MapPin, Briefcase, Calendar as CalendarIcon, Shield, FileText, Loader2 } from 'lucide-react';
 import { employeeService } from '../services/employeeService';
+import { profileService } from '../services/profileService';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import './EmployeeDetails.css';
@@ -13,7 +13,9 @@ export function EmployeeDetails() {
   const { user } = useAuth();
   const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState('general');
-  const [employee, setEmployee] = useState(() => mockEmployees.find(emp => emp.id === id) || null);
+  const [employee, setEmployee] = useState(null);
+  const [privateInfo, setPrivateInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // Salary calculator state
   const [monthWage, setMonthWage] = useState(50000);
@@ -21,16 +23,37 @@ export function EmployeeDetails() {
   useEffect(() => {
     let isMounted = true;
     if (id) {
-      employeeService.getEmployeeById(id).then(data => {
-        if (isMounted && data) {
-          setEmployee(data);
-        }
-      }).catch(() => {
-        // Silently fail — mock data is already loaded
-      });
+      setLoading(true);
+      employeeService.getEmployeeById(id)
+        .then(data => {
+          if (isMounted && data) {
+            setEmployee(data);
+            if (data.uuid) {
+              profileService.getPrivateInfo(data.uuid).then(info => {
+                if (isMounted && info) setPrivateInfo(info);
+              }).catch(() => {});
+            }
+          }
+        })
+        .catch((err) => {
+          console.warn('Employee fetch error:', err);
+        })
+        .finally(() => {
+          if (isMounted) setLoading(false);
+        });
     }
     return () => { isMounted = false; };
   }, [id]);
+
+  if (loading) {
+    return (
+      <div className="dossier-page">
+        <div className="dossier-empty" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} /> Loading Record...
+        </div>
+      </div>
+    );
+  }
 
   if (!employee) {
     return (
@@ -40,7 +63,7 @@ export function EmployeeDetails() {
     );
   }
 
-  const isAdmin = user?.role === 'ADMIN' || user?.role === 'HR' || true; // true for demo
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'HR' || user?.profile?.role === 'admin';
 
   // Salary Calculations
   const yearlyWage = monthWage * 12;
@@ -62,7 +85,7 @@ export function EmployeeDetails() {
         <div className="dossier-identity">
           <div className="dossier-image-wrapper">
             <img src={employee.avatarUrl} alt={employee.firstName} className="dossier-avatar" />
-            <div className={`dossier-status-badge ${employee.status.toLowerCase().replace(' ', '-')}`}>
+            <div className={`dossier-status-badge ${(employee.status || '').toLowerCase().replace(' ', '-')}`}>
               {employee.status}
             </div>
           </div>
@@ -115,7 +138,7 @@ export function EmployeeDetails() {
               </div>
               <div className="data-field">
                 <span className="field-label"><Phone size={14} /> Mobile Phone</span>
-                <span className="field-value font-mono">{employee.phone || '+1 (555) 000-0000'}</span>
+                <span className="field-value font-mono">{employee.phone || privateInfo?.phone_number || '+1 (555) 000-0000'}</span>
               </div>
               <div className="data-field">
                 <span className="field-label"><MapPin size={14} /> Location</span>
@@ -160,27 +183,27 @@ export function EmployeeDetails() {
             <div className="data-grid">
               <div className="data-field">
                 <span className="field-label">Date of Birth</span>
-                <span className="field-value font-mono">15/04/1992</span>
+                <span className="field-value font-mono">{privateInfo?.date_of_birth || '—'}</span>
               </div>
               <div className="data-field">
                 <span className="field-label">Nationality</span>
-                <span className="field-value">Indian</span>
+                <span className="field-value">{privateInfo?.nationality || '—'}</span>
               </div>
               <div className="data-field">
                 <span className="field-label">Gender</span>
-                <span className="field-value">Male</span>
-              </div>
-              <div className="data-field">
-                <span className="field-label">Marital Status</span>
-                <span className="field-value">Single</span>
+                <span className="field-value">{privateInfo?.gender || '—'}</span>
               </div>
               <div className="data-field">
                 <span className="field-label">Personal Email</span>
-                <span className="field-value font-mono">{employee.firstName?.toLowerCase()}@personal.com</span>
+                <span className="field-value font-mono">{privateInfo?.personal_email || `${employee.firstName?.toLowerCase()}@personal.com`}</span>
               </div>
               <div className="data-field">
-                <span className="field-label">Routing Address</span>
-                <span className="field-value">123 Tech Park, Bangalore</span>
+                <span className="field-label">Emergency Contact</span>
+                <span className="field-value">{privateInfo?.emergency_contact_name || '—'}</span>
+              </div>
+              <div className="data-field">
+                <span className="field-label">Emergency Phone</span>
+                <span className="field-value font-mono">{privateInfo?.emergency_contact_phone || '—'}</span>
               </div>
             </div>
 
@@ -188,27 +211,11 @@ export function EmployeeDetails() {
             <div className="data-grid">
               <div className="data-field">
                 <span className="field-label">Bank</span>
-                <span className="field-value">HDFC Bank Ltd</span>
+                <span className="field-value">{privateInfo?.bank_name || '—'}</span>
               </div>
               <div className="data-field">
                 <span className="field-label">Account Number</span>
-                <span className="field-value font-mono">XXXX-XXXX-1234</span>
-              </div>
-              <div className="data-field">
-                <span className="field-label">IFSC Code</span>
-                <span className="field-value font-mono">HDFC0001234</span>
-              </div>
-              <div className="data-field">
-                <span className="field-label">PAN Number</span>
-                <span className="field-value font-mono">ABCDE1234F</span>
-              </div>
-              <div className="data-field">
-                <span className="field-label">UAN Number</span>
-                <span className="field-value font-mono">100123456789</span>
-              </div>
-              <div className="data-field">
-                <span className="field-label">PF Code</span>
-                <span className="field-value font-mono">MH/BAN/12345</span>
+                <span className="field-value font-mono">{privateInfo?.account_number ? `XXXX-${privateInfo.account_number.slice(-4)}` : '—'}</span>
               </div>
             </div>
           </div>

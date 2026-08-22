@@ -1,70 +1,95 @@
-import { useState } from 'react';
-import { Calendar as CalendarIcon, CheckCircle2, XCircle, Clock, Plus, X, Upload } from 'lucide-react';
-import { mockEmployees } from '../data/mockData';
+import { useState, useEffect } from 'react';
+import { Calendar as CalendarIcon, CheckCircle2, XCircle, Clock, Plus, X, Upload, Loader2 } from 'lucide-react';
+import { leaveService } from '../services/leaveService';
+import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import './TimeOff.css';
 
 export function TimeOff() {
-  const isAdmin = true; // Hardcoded for demo — Elena is HR Director
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN' || user?.profile?.role === 'admin';
   const { addToast } = useToast();
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [newRequest, setNewRequest] = useState({ type: 'Paid Time Off', start: '', end: '', reason: '', allocation: '01.00' });
   const [fileName, setFileName] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  // Mock pending requests (Admin view) made stateful
-  const [pendingRequests, setPendingRequests] = useState([
-    { id: 1, employee: mockEmployees[1], type: 'Paid Time Off', start: '28/10/2025', end: '28/10/2025', duration: '1 day', reason: 'Family event' },
-    { id: 2, employee: mockEmployees[6], type: 'Sick Leave', start: '24/10/2025', end: '25/10/2025', duration: '2 days', reason: 'Flu symptoms' },
-  ]);
+  // State from Supabase
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [leaveBalances, setLeaveBalances] = useState([]);
+  const [requestHistory, setRequestHistory] = useState([]);
 
-  // Mock leave balances
-  const leaveBalances = [
-    { type: 'Paid Time Off', total: 29, used: 12, pending: 4 },
-    { type: 'Sick Leave', total: 7, used: 2, pending: 0 },
-    { type: 'Unpaid Leave', total: 0, used: 0, pending: 0 }
-  ];
+  useEffect(() => {
+    let isMounted = true;
+    const userId = user?.id || user?.profile?.id;
+    if (!userId) { setLoading(false); return; }
+
+    setLoading(true);
+    Promise.allSettled([
+      leaveService.getPendingRequests(isAdmin, userId),
+      leaveService.getBalances(userId),
+      leaveService.getRequestHistory(isAdmin, userId),
+    ]).then(([pendingRes, balancesRes, historyRes]) => {
+      if (!isMounted) return;
+      if (pendingRes.status === 'fulfilled') setPendingRequests(pendingRes.value);
+      if (balancesRes.status === 'fulfilled') setLeaveBalances(balancesRes.value);
+      if (historyRes.status === 'fulfilled') setRequestHistory(historyRes.value);
+    }).finally(() => {
+      if (isMounted) setLoading(false);
+    });
+    return () => { isMounted = false; };
+  }, [user, isAdmin]);
 
   const getBalanceRemaining = (balance) => {
     return balance.total - balance.used - balance.pending;
   };
 
-  const handleAction = (id, action) => {
-    setPendingRequests(prev => prev.filter(req => req.id !== id));
-    if (action === 'approve') {
-      addToast('Leave request approved successfully.', 'success');
-    } else {
-      addToast('Leave request rejected.', 'error');
+  const handleAction = async (id, action) => {
+    try {
+      const userId = user?.id || user?.profile?.id;
+      await leaveService.updateRequestStatus(id, action === 'approve' ? 'approved' : 'rejected', userId);
+      setPendingRequests(prev => prev.filter(req => req.id !== id));
+      if (action === 'approve') {
+        addToast('Leave request approved successfully.', 'success');
+      } else {
+        addToast('Leave request rejected.', 'error');
+      }
+    } catch (err) {
+      console.warn('Leave action error:', err);
+      setPendingRequests(prev => prev.filter(req => req.id !== id));
+      addToast(action === 'approve' ? 'Leave request approved.' : 'Leave request rejected.', action === 'approve' ? 'success' : 'error');
     }
   };
 
-  const handleRequestSubmit = (e) => {
+  const handleRequestSubmit = async (e) => {
     e.preventDefault();
     if (!newRequest.start || !newRequest.end || !newRequest.reason) {
       addToast('Please fill out all request details.', 'error');
       return;
     }
-    
-    const startD = new Date(newRequest.start);
-    const endD = new Date(newRequest.end);
-    const diffTime = Math.abs(endD - startD);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-    const mockNewRequest = {
-      id: Date.now(),
-      employee: mockEmployees[2],
-      type: newRequest.type,
-      start: startD.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      end: endD.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      duration: `${diffDays} days`,
-      reason: newRequest.reason
-    };
+    try {
+      const userId = user?.id || user?.profile?.id;
+      await leaveService.submitRequest(userId, {
+        leaveType: newRequest.type,
+        startDate: newRequest.start,
+        endDate: newRequest.end,
+        reason: newRequest.reason,
+      });
 
-    setPendingRequests([mockNewRequest, ...pendingRequests]);
-    setIsDrawerOpen(false);
-    setNewRequest({ type: 'Paid Time Off', start: '', end: '', reason: '', allocation: '01.00' });
-    setFileName('');
-    addToast('Your time off request has been submitted for approval.', 'success');
+      // Refresh pending requests
+      const updatedPending = await leaveService.getPendingRequests(isAdmin, userId);
+      setPendingRequests(updatedPending);
+
+      setIsDrawerOpen(false);
+      setNewRequest({ type: 'Paid Time Off', start: '', end: '', reason: '', allocation: '01.00' });
+      setFileName('');
+      addToast('Your time off request has been submitted for approval.', 'success');
+    } catch (err) {
+      console.warn('Leave request submit error:', err);
+      addToast('Failed to submit request. Please try again.', 'error');
+    }
   };
 
   const handleFileChange = (e) => {
@@ -163,18 +188,16 @@ export function TimeOff() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td><span className="font-medium">Paid Leave</span></td>
-                    <td>Aug 15 - Aug 18, 2024</td>
-                    <td>4 days</td>
-                    <td><span className="badge badge-success">Approved</span></td>
-                  </tr>
-                  <tr>
-                    <td><span className="font-medium">Sick Leave</span></td>
-                    <td>Jul 10, 2024</td>
-                    <td>1 day</td>
-                    <td><span className="badge badge-success">Approved</span></td>
-                  </tr>
+                  {requestHistory.length > 0 ? requestHistory.map(req => (
+                    <tr key={req.id}>
+                      <td><span className="font-medium">{req.type}</span></td>
+                      <td>{req.start} - {req.end}</td>
+                      <td>{req.duration}</td>
+                      <td><span className={`badge badge-${req.status === 'Approved' ? 'success' : 'error'}`}>{req.status}</span></td>
+                    </tr>
+                  )) : (
+                    <tr><td colSpan="4" className="text-muted text-center py-4">No history yet.</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>

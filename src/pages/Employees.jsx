@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, X } from 'lucide-react';
+import { Search, X, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Magnetic } from '../components/layout/Magnetic';
-import { mockEmployees } from '../data/mockData';
 import { employeeService } from '../services/employeeService';
 import { useToast } from '../context/ToastContext';
 import { generateEmployeeId } from '../utils/idGenerator';
@@ -13,20 +12,20 @@ export function Employees() {
   const navigate = useNavigate();
   const { addToast } = useToast();
   
-  const [employeesList, setEmployeesList] = useState(mockEmployees);
+  const [employeesList, setEmployeesList] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDept, setFilterDept] = useState('All');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [dbError, setDbError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
+    setLoading(true);
     employeeService.getEmployees()
       .then((data) => {
         if (isMounted) {
-          if (data && data.length > 0) {
-            setEmployeesList(data);
-          }
+          setEmployeesList(data || []);
           setDbError(null);
         }
       })
@@ -35,6 +34,9 @@ export function Employees() {
           console.warn('Employees database fetch error:', err.message);
           setDbError(err.message);
         }
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
       });
     return () => {
       isMounted = false;
@@ -57,16 +59,16 @@ export function Employees() {
 
   const filteredEmployees = employeesList.filter(emp => {
     const matchesSearch = 
-      emp.firstName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      emp.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.department.toLowerCase().includes(searchTerm.toLowerCase());
+      (emp.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (emp.lastName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (emp.department || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesDept = filterDept === 'All' || emp.department === filterDept;
     
     return matchesSearch && matchesDept;
   });
 
-  const departments = ['All', ...new Set(employeesList.map(emp => emp.department))];
+  const departments = ['All', ...new Set(employeesList.map(emp => emp.department).filter(Boolean))];
 
   const handleAddEmployee = async (e) => {
     e.preventDefault();
@@ -174,44 +176,51 @@ export function Employees() {
         </div>
       )}
 
-      <div className="roster-grid">
-        {filteredEmployees.map((emp, index) => (
-          <motion.div 
-            key={emp.id} 
-            className="roster-card"
-            onClick={() => navigate(`/employees/${emp.id}`)}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
-            whileHover={{ y: -4, transition: { duration: 0.2, ease: "easeOut" } }}
-          >
-            <div className="roster-image-container">
-              <img src={emp.avatarUrl} alt={emp.firstName} className="roster-avatar" />
-              <div className="roster-status-overlay">
-                {getStatusDisplay(emp.status)}
-              </div>
-            </div>
-            
-            <div className="roster-details">
-              <div className="roster-identity">
-                <span className="roster-id font-mono">{emp.id}</span>
-                <h3 className="roster-name">{emp.firstName} {emp.lastName}</h3>
+      {loading ? (
+        <div className="roster-empty" style={{ gridColumn: '1 / -1', padding: '4rem' }}>
+          <Loader2 size={24} className="text-muted" style={{ animation: 'spin 1s linear infinite' }} />
+          <p className="font-mono text-muted">Loading personnel data...</p>
+        </div>
+      ) : (
+        <div className="roster-grid">
+          {filteredEmployees.map((emp, index) => (
+            <motion.div 
+              key={emp.id} 
+              className="roster-card"
+              onClick={() => navigate(`/employees/${emp.uuid || emp.id}`)}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
+              whileHover={{ y: -4, transition: { duration: 0.2, ease: "easeOut" } }}
+            >
+              <div className="roster-image-container">
+                <img src={emp.avatarUrl} alt={emp.firstName} className="roster-avatar" />
+                <div className="roster-status-overlay">
+                  {getStatusDisplay(emp.status)}
+                </div>
               </div>
               
-              <div className="roster-role">
-                <p className="role-title">{emp.position}</p>
-                <p className="role-dept font-mono">{emp.department}</p>
+              <div className="roster-details">
+                <div className="roster-identity">
+                  <span className="roster-id font-mono">{emp.id}</span>
+                  <h3 className="roster-name">{emp.firstName} {emp.lastName}</h3>
+                </div>
+                
+                <div className="roster-role">
+                  <p className="role-title">{emp.position}</p>
+                  <p className="role-dept font-mono">{emp.department}</p>
+                </div>
               </div>
+            </motion.div>
+          ))}
+          {filteredEmployees.length === 0 && !loading && (
+            <div className="roster-empty">
+              <Search size={24} className="text-muted" />
+              <p className="font-mono text-muted">No records match the query.</p>
             </div>
-          </motion.div>
-        ))}
-        {filteredEmployees.length === 0 && (
-          <div className="roster-empty">
-            <Search size={24} className="text-muted" />
-            <p className="font-mono text-muted">No records match the query.</p>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {/* Add Employee Drawer */}
       <div className={`drawer-overlay ${isDrawerOpen ? 'open' : ''}`} onClick={() => setIsDrawerOpen(false)}></div>

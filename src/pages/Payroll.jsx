@@ -1,16 +1,33 @@
-import { useState } from 'react';
-import { Search, DollarSign, ArrowUpRight, ArrowDownRight, Edit3, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, DollarSign, ArrowUpRight, ArrowDownRight, Edit3, X, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Magnetic } from '../components/layout/Magnetic';
 import { useToast } from '../context/ToastContext';
-import { mockPayroll } from '../data/mockData';
+import { payrollService } from '../services/payrollService';
 
 export function Payroll() {
   const { addToast } = useToast();
-  const [payrollList, setPayrollList] = useState(mockPayroll);
+  const [payrollList, setPayrollList] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+    payrollService.getPayrollRecords()
+      .then(data => {
+        if (isMounted) setPayrollList(data || []);
+      })
+      .catch(err => {
+        console.warn('Payroll fetch error:', err.message);
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+    return () => { isMounted = false; };
+  }, []);
 
   const [editSalary, setEditSalary] = useState('');
 

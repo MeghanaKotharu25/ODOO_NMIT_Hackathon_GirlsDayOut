@@ -3,7 +3,6 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Bell, Search, LayoutDashboard, Users, Clock, Calendar, HelpCircle, Settings, UserCircle, LogOut, DollarSign } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Magnetic } from './Magnetic';
-import { mockCurrentUser } from '../../data/mockData';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 import './Layout.css';
@@ -142,8 +141,8 @@ export function TopBar() {
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
               >
                 <img 
-                  src={mockCurrentUser.avatarUrl} 
-                  alt={mockCurrentUser.firstName} 
+                  src={user?.avatarUrl || user?.profile?.avatar_url || `https://i.pravatar.cc/150?u=${user?.id}`} 
+                  alt={user?.firstName || user?.profile?.first_name || 'User'} 
                   className="avatar-sm"
                 />
               </div>
@@ -152,12 +151,12 @@ export function TopBar() {
             {showProfileMenu && (
               <div className="popover-menu profile-menu">
                 <div className="popover-header profile-header">
-                  <span className="font-mono">{mockCurrentUser.firstName} {mockCurrentUser.lastName}</span>
-                  <span className="text-muted text-xs uppercase">{mockCurrentUser.role}</span>
+                  <span className="font-mono">{user?.firstName || user?.profile?.first_name || ''} {user?.lastName || user?.profile?.last_name || ''}</span>
+                  <span className="text-muted text-xs uppercase">{user?.role || user?.profile?.role || 'EMPLOYEE'}</span>
                 </div>
                 <button 
                   className="popover-action"
-                  onClick={() => { setShowProfileMenu(false); navigate(`/employees/${mockCurrentUser.id}`); }}
+                  onClick={() => { setShowProfileMenu(false); navigate(`/employees/${user?.id || ''}`); }}
                 >
                   <UserCircle size={14} /> My Dossier
                 </button>
