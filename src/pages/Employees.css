@@ -159,7 +159,7 @@
 }
 
 .status-dot.present { background-color: var(--status-success); }
-.status-dot.absent { background-color: var(--status-error); }
+.status-dot.absent { background-color: var(--status-warning); }
 .status-dot.leave { background-color: var(--status-info); }
 
 .roster-details {

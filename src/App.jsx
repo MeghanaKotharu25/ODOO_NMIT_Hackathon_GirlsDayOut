@@ -17,6 +17,7 @@ import { Register } from './pages/Register';
 import { LoadingScreen } from './pages/LoadingScreen';
 import { MyProfile } from './pages/MyProfile';
 import { Settings } from './pages/Settings';
+import { Startup } from './pages/Startup';
 
 const Help = () => <div className="p-8 font-mono">Help Center (Placeholder)</div>;
 
@@ -26,6 +27,7 @@ function App() {
       <CustomCursor />
       <Routes>
         {/* Unprotected Public Routes */}
+        <Route path="/welcome" element={<Startup />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/loading" element={<LoadingScreen />} />
@@ -39,7 +41,7 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Dashboard />} />
+          <Route index element={<Navigate to="/employees" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="employees" element={<Employees />} />
           <Route path="employees/:id" element={<EmployeeDetails />} />
@@ -52,7 +54,7 @@ function App() {
         </Route>
 
         {/* Fallback wildcard route */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/welcome" replace />} />
       </Routes>
     </ToastProvider>
   );
