@@ -1,12 +1,12 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 export const attendanceService = {
-<<<<<<< HEAD
   getLocalDate: () => {
     const now = new Date();
     const offset = now.getTimezoneOffset() * 60000;
     return new Date(now.getTime() - offset).toISOString().slice(0, 10);
-=======
+  },
+
   // Fetch attendance records from Supabase joined with profiles
   getAttendance: async (employeeUuid = null) => {
     if (!isSupabaseConfigured) return [];
@@ -91,7 +91,6 @@ export const attendanceService = {
         workHours: record.work_hours
       };
     });
->>>>>>> 64c56909774d8b84899b41fa05e18ca1073479e0
   },
 
   // Get today's attendance record for a specific employee
