@@ -1,0 +1,125 @@
+.admin-attendance-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.admin-attendance-header,
+.admin-table-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--spacing-6);
+}
+
+.admin-attendance-header {
+  border-bottom: 2px solid var(--border-heavy);
+  padding-bottom: var(--spacing-6);
+}
+
+.admin-attendance-header h1 {
+  margin: var(--spacing-2) 0;
+}
+
+.admin-date-picker {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-surface);
+  white-space: nowrap;
+}
+
+.admin-date-picker input {
+  border: 0;
+  color: var(--text-primary);
+  background: transparent;
+  font-family: var(--font-mono);
+  outline: 0;
+}
+
+.admin-attendance-table {
+  overflow: hidden;
+}
+
+.admin-table-heading {
+  align-items: center;
+  padding: var(--spacing-6);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.admin-table-heading h2 {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.admin-table-heading p {
+  margin-top: var(--spacing-1);
+  font-size: 0.8rem;
+}
+
+.admin-attendance-table .data-table td {
+  vertical-align: middle;
+}
+
+.admin-attendance-table td strong,
+.admin-attendance-table td small {
+  display: block;
+}
+
+.admin-attendance-table td small {
+  margin-top: 0.2rem;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+
+.admin-status-select,
+.admin-edit-actions input {
+  border: 1px solid var(--border-strong);
+  padding: var(--spacing-2);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.admin-status-select.present { color: var(--status-success); }
+.admin-status-select.absent { color: var(--status-error); }
+.admin-status-select.half_day { color: var(--status-info); }
+.admin-status-select.leave { color: var(--status-warning); }
+
+.admin-edit-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+}
+
+.admin-edit-actions .btn {
+  padding: var(--spacing-2) var(--spacing-3);
+  font-size: 0.75rem;
+}
+
+@media (max-width: 900px) {
+  .admin-attendance-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-date-picker {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .admin-attendance-table {
+    overflow-x: auto;
+  }
+
+  .admin-attendance-table .data-table {
+    min-width: 900px;
+  }
+}

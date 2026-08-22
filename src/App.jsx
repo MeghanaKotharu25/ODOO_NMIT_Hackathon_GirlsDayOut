@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './context/ToastContext';
 import { AppShell } from './components/layout/AppShell';
 import { ProtectedRoute } from './routes/ProtectedRoute';
+import { RoleProtectedRoute } from './routes/RoleProtectedRoute';
 import { CustomCursor } from './components/layout/CustomCursor';
 
 // Pages
@@ -9,6 +10,7 @@ import { Dashboard } from './pages/Dashboard';
 import { Employees } from './pages/Employees';
 import { EmployeeDetails } from './pages/EmployeeDetails';
 import Attendance from './pages/employees/Attendance';
+import AdminAttendance from './pages/admin/attendance/Attendance';
 import { TimeOff } from './pages/TimeOff';
 import { Payroll } from './pages/Payroll';
 import { Login } from './pages/Login';
@@ -41,6 +43,7 @@ function App() {
           <Route path="employees" element={<Employees />} />
           <Route path="employees/:id" element={<EmployeeDetails />} />
           <Route path="attendance" element={<Attendance />} />
+          <Route path="admin/attendance" element={<RoleProtectedRoute><AdminAttendance /></RoleProtectedRoute>} />
           <Route path="time-off" element={<TimeOff />} />
           <Route path="salary" element={<Payroll />} />
           <Route path="profile" element={<MyProfile />} />
