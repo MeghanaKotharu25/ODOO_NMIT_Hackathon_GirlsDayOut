@@ -1,0 +1,250 @@
+.salary-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.employee-selector {
+  display: flex;
+  align-items: center;
+}
+
+.salary-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--spacing-6);
+}
+
+@media (max-width: 1024px) {
+  .salary-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+.salary-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+/* Wage Card */
+.wage-card {
+  padding: var(--spacing-8);
+  background: linear-gradient(145deg, var(--bg-surface) 0%, var(--bg-subtle) 100%);
+}
+
+.wage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-8);
+}
+
+.wage-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.wage-numbers {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+@media (max-width: 640px) {
+  .wage-numbers {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-4);
+  }
+  
+  .wage-divider {
+    display: none;
+  }
+}
+
+.wage-divider {
+  width: 1px;
+  height: 60px;
+  background-color: var(--border-strong);
+}
+
+.primary-wage, .secondary-wage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.wage-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.primary-wage .wage-amount {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.secondary-wage .wage-amount {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  line-height: 1;
+}
+
+/* Structure Card */
+.structure-card {
+  padding: var(--spacing-6);
+}
+
+.visual-bar-container {
+  display: flex;
+  height: 16px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin: var(--spacing-6) 0;
+}
+
+.visual-bar-segment {
+  height: 100%;
+  transition: opacity 0.2s ease;
+  cursor: pointer;
+}
+
+.visual-bar-segment:hover {
+  opacity: 0.8;
+}
+
+.structure-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.structure-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-3) 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.structure-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.structure-item-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+.color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-sm);
+}
+
+.structure-name {
+  font-weight: 500;
+}
+
+.structure-percent {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background-color: var(--bg-subtle);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.structure-amount {
+  font-weight: 600;
+  font-family: monospace;
+  font-size: 1.125rem;
+}
+
+/* Deductions */
+.deductions-card {
+  padding: var(--spacing-6);
+}
+
+.deductions-list {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--spacing-4);
+}
+
+.deduction-item {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-2) 0;
+}
+
+.deduction-name {
+  color: var(--text-secondary);
+}
+
+.deduction-amount {
+  color: var(--status-error);
+  font-family: monospace;
+}
+
+.deductions-total {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-3) 0;
+  margin-top: var(--spacing-2);
+  border-top: 1px dashed var(--border-strong);
+  font-weight: 600;
+}
+
+.net-salary-box {
+  margin-top: var(--spacing-6);
+  padding: var(--spacing-4);
+  background-color: var(--bg-subtle);
+  border-radius: var(--radius-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.net-label {
+  font-weight: 600;
+}
+
+.net-amount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--status-success);
+}
+
+.info-card {
+  padding: var(--spacing-6);
+}
+
+.revision-item {
+  margin-top: var(--spacing-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.revision-date {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.revision-change {
+  color: var(--status-success);
+  font-weight: 500;
+}
+
+.revision-reason {
+  font-size: 0.75rem;
+}
