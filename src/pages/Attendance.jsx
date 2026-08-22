@@ -26,6 +26,12 @@ export function Attendance() {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const formatDuration = (start, end) => {
+    if (!start) return '--';
+    const totalMinutes = Math.max(0, Math.floor((end - start) / 60000));
+    return `${Math.floor(totalMinutes / 60)}h ${String(totalMinutes % 60).padStart(2, '0')}m`;
+  };
+
   const handleCheckIn = () => {
     setCheckInTime(new Date());
     setCheckOutTime(null);
@@ -69,6 +75,10 @@ export function Attendance() {
         <div className="summary-card">
           <span className="summary-label font-mono">Current status</span>
           <span className={`status-badge ${currentStatus.toLowerCase().replaceAll(' ', '-')}`}>{currentStatus}</span>
+        </div>
+        <div className="summary-card">
+          <span className="summary-label font-mono">Total hours worked</span>
+          <strong>{formatDuration(checkInTime, checkOutTime || currentTime)}</strong>
         </div>
       </section>
 
