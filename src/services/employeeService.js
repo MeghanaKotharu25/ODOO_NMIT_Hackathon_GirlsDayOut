@@ -85,8 +85,7 @@ export const employeeService = {
     const { data: profile, error } = await query.maybeSingle();
 
     if (error) {
-      console.error('Supabase getEmployeeById error:', error);
-      throw new Error(`Database Error: ${error.message || 'Failed to fetch employee details'}`);
+      console.warn('Supabase getEmployeeById error:', error);
     }
 
     if (!profile) {

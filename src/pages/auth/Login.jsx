@@ -26,7 +26,7 @@ export function Login() {
   // Redirect if already authenticated
   useEffect(() => {
     if (user && !authLoading) {
-      navigate('/', { replace: true });
+      navigate('/employees', { replace: true });
     }
   }, [user, authLoading, navigate]);
 
@@ -50,7 +50,7 @@ export function Login() {
         return;
       }
 
-      navigate('/', { replace: true });
+      navigate('/employees', { replace: true });
     } catch (err) {
       console.error('Login error:', err);
       const msg = err.message || '';
@@ -95,7 +95,7 @@ export function Login() {
       if (data.session === null) {
         setErrorMessage('Registration successful! Please check your email to confirm your account.');
       } else {
-        navigate('/', { replace: true });
+        navigate('/employees', { replace: true });
       }
     } catch (err) {
       console.error('Signup error:', err);

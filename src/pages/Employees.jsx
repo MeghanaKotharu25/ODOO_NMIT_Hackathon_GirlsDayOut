@@ -1,16 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, X, Loader2 } from 'lucide-react';
+import { Search, X, Loader2, Plane } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Magnetic } from '../components/layout/Magnetic';
 import { employeeService } from '../services/employeeService';
 import { useToast } from '../context/ToastContext';
 import { generateEmployeeId } from '../utils/idGenerator';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 import './Employees.css';
 
 export function Employees() {
   const navigate = useNavigate();
   const { addToast } = useToast();
+  const { user } = useAuth();
+  const isAdmin = (user?.profile?.role || user?.role || '').toLowerCase() === 'admin';
   
   const [employeesList, setEmployeesList] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -19,28 +23,24 @@ export function Employees() {
   const [dbError, setDbError] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let isMounted = true;
+  const fetchEmployees = () => {
     setLoading(true);
     employeeService.getEmployees()
       .then((data) => {
-        if (isMounted) {
-          setEmployeesList(data || []);
-          setDbError(null);
-        }
+        setEmployeesList(data || []);
+        setDbError(null);
       })
       .catch((err) => {
-        if (isMounted) {
-          console.warn('Employees database fetch error:', err.message);
-          setDbError(err.message);
-        }
+        console.warn('Employees database fetch error:', err.message);
+        setDbError(err.message);
       })
       .finally(() => {
-        if (isMounted) setLoading(false);
+        setLoading(false);
       });
-    return () => {
-      isMounted = false;
-    };
+  };
+
+  useEffect(() => {
+    fetchEmployees();
   }, []);
 
   // Form state for new employee
@@ -50,9 +50,9 @@ export function Employees() {
 
   const getStatusDisplay = (status) => {
     switch(status) {
-      case 'Present': return <span className="status-dot present"></span>;
-      case 'Absent': return <span className="status-dot absent"></span>;
-      case 'On Leave': return <span className="status-dot leave"></span>;
+      case 'Present': return <span className="status-dot present" title="Present"></span>;
+      case 'Absent': return <span className="status-dot absent" title="Absent"></span>;
+      case 'On Leave': return <Plane size={16} className="status-icon leave" title="On Leave" />;
       default: return null;
     }
   };
@@ -83,6 +83,13 @@ export function Employees() {
     const serial = employeesList.length + 1;
     const newId = generateEmployeeId(companyName, newEmployee.firstName, newEmployee.lastName, year, serial);
 
+    // Auto-generate password
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
+    let autoPassword = '';
+    for (let i = 0; i < 10; i++) {
+      autoPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
     const empData = {
       id: newId,
       ...newEmployee,
@@ -95,78 +102,57 @@ export function Employees() {
       manager: 'Not Assigned',
       role: 'EMPLOYEE'
     };
-    
     try {
-      // Attempt to call Edge Function (Will fail gracefully if env vars aren't set)
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      if (supabaseUrl) {
-        await fetch(`${supabaseUrl}/functions/v1/create-employee`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: empData.email,
-            password: 'TemporaryPassword123!',
-            firstName: empData.firstName,
-            lastName: empData.lastName,
-            position: empData.position,
-            department: empData.department,
-            companyName: companyName,
-            serialNumber: serial
-          })
-        });
-      }
+      addToast('Creating record in database...', 'info');
+      const { data, error } = await supabase.functions.invoke('create-employee', {
+        body: {
+          email: `${newEmployee.firstName.toLowerCase()}.${newEmployee.lastName.toLowerCase()}@dayflow.demo`,
+          password: autoPassword,
+          firstName: newEmployee.firstName,
+          lastName: newEmployee.lastName,
+          position: newEmployee.position,
+          department: newEmployee.department,
+          companyName: companyName,
+          serialNumber: serial
+        }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      // Re-fetch to guarantee sync with DB
+      fetchEmployees();
+      setIsDrawerOpen(false);
+      setNewEmployee({ firstName: '', lastName: '', position: '', department: '' });
+      addToast(`Record Created! System Password: ${data?.generatedPassword || autoPassword}`, 'success');
+
     } catch (err) {
-      console.warn("Backend Edge Function disconnected. Using mock state.");
+      console.error("Backend Edge Function failed:", err);
+      addToast(`Failed to create employee: ${err.message}`, 'error');
     }
-    
-    setEmployeesList([empData, ...employeesList]);
-    setIsDrawerOpen(false);
-    setNewEmployee({ firstName: '', lastName: '', position: '', department: '' });
-    addToast(`Record Created: ID ${newId}`, 'success');
   };
 
   return (
     <div className="roster-page">
       <header className="roster-header">
-        <div className="roster-title-section">
-          <h1 className="page-title">Personnel Roster</h1>
-          <p className="roster-meta font-mono">
-            {employeesList.length} Records &mdash; Sorted by Department
-          </p>
-        </div>
-        
-        <div className="roster-controls">
-          <div className="search-bar">
-            <Search className="search-icon" size={16} />
-            <input 
-              type="text" 
-              placeholder="Query name..." 
-              className="search-input font-mono"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          
-          <select 
-            className="filter-select font-mono"
-            value={filterDept}
-            onChange={(e) => setFilterDept(e.target.value)}
+        {isAdmin && (
+          <button 
+            type="button"
+            className="btn-new-record" 
+            onClick={() => setIsDrawerOpen(true)}
           >
-            {departments.map(dept => (
-              <option key={dept} value={dept}>{dept}</option>
-            ))}
-          </select>
-
-          <Magnetic strength={0.15}>
-            <button 
-              type="button"
-              className="btn-primary" 
-              style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}
-              onClick={() => setIsDrawerOpen(true)}
-            >
-              + Add Record
-            </button>
-          </Magnetic>
+            NEW
+          </button>
+        )}
+        
+        <div className="roster-search-bar">
+          <input 
+            type="text" 
+            placeholder="Search" 
+            className="roster-search-input font-sans"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
       </header>
 
@@ -195,21 +181,13 @@ export function Employees() {
             >
               <div className="roster-image-container">
                 <img src={emp.avatarUrl} alt={emp.firstName} className="roster-avatar" />
-                <div className="roster-status-overlay">
-                  {getStatusDisplay(emp.status)}
-                </div>
+              </div>
+              <div className="roster-status-overlay">
+                {getStatusDisplay(emp.status)}
               </div>
               
               <div className="roster-details">
-                <div className="roster-identity">
-                  <span className="roster-id font-mono">{emp.id}</span>
-                  <h3 className="roster-name">{emp.firstName} {emp.lastName}</h3>
-                </div>
-                
-                <div className="roster-role">
-                  <p className="role-title">{emp.position}</p>
-                  <p className="role-dept font-mono">{emp.department}</p>
-                </div>
+                <h3 className="roster-name">[{emp.firstName} {emp.lastName}]</h3>
               </div>
             </motion.div>
           ))}

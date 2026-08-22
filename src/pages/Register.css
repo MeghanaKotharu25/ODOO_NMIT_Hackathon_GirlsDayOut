@@ -1,0 +1,81 @@
+.flex-row-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-4);
+}
+
+.flex-row-group .form-label {
+  flex: 0 0 120px;
+  text-align: right;
+  margin-bottom: 0;
+}
+
+.input-with-button {
+  display: flex;
+  flex: 1;
+  gap: var(--spacing-2);
+}
+
+.icon-btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--accent-primary);
+  color: white;
+  border-radius: var(--radius-sm);
+  width: 40px;
+  height: 40px;
+  transition: background-color 0.2s var(--ease-snappy);
+}
+
+.icon-btn-primary:hover {
+  background-color: var(--accent-primary-hover);
+}
+
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-toggle {
+  position: absolute;
+  right: var(--spacing-3);
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-toggle:hover {
+  color: var(--text-primary);
+}
+
+.w-full {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .flex-row-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-1);
+  }
+  
+  .flex-row-group .form-label {
+    text-align: left;
+    flex: auto;
+  }
+  
+  .input-with-button {
+    width: 100%;
+  }
+  
+  .password-wrapper {
+    width: 100%;
+  }
+}

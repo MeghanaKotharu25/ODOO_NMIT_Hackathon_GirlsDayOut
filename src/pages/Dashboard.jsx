@@ -40,7 +40,6 @@ export function Dashboard() {
           <motion.div variants={staggerItem}>
             <p className="hero-date font-mono uppercase text-sm tracking-widest text-muted">{currentDate}</p>
           </motion.div>
-          <motion.div variants={drawLine} className="border-b-2 border-heavy mb-6"></motion.div>
           
           <motion.div variants={staggerItem} className="hero-operational-summary">
             <div className="summary-stat">
