@@ -118,8 +118,8 @@ export function AuthProvider({ children }) {
     return await authService.signIn(email, password);
   };
 
-  const signUp = async (email, password) => {
-    return await authService.signUp(email, password);
+  const signUp = async (email, password, metadata = {}) => {
+    return await authService.signUp(email, password, metadata);
   };
 
   const signOut = async () => {

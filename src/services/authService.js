@@ -1,12 +1,15 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 export const authService = {
-  // Sign up a new user with email & password
-  signUp: async (email, password) => {
+  // Sign up a new user with email & password and optional user metadata
+  signUp: async (email, password, metadata = {}) => {
     if (!isSupabaseConfigured) throw new Error('Demo mode: Supabase not configured');
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: metadata,
+      },
     });
     if (error) throw error;
     return data;

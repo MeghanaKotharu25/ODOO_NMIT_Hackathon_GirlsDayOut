@@ -104,9 +104,9 @@ export function Login() {
             </div>
           </div>
 
-          <div style={{ display: 'none' }}>
+          <div style={{ marginTop: '1.25rem', textAlign: 'center' }}>
             <a href="#" onClick={(e) => { e.preventDefault(); navigate('/register'); }} style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-              Don't have an Account? <span style={{ color: 'var(--text-primary)' }}>Sign Up</span>
+              Don't have an Account? <span style={{ color: 'var(--text-primary)', textDecoration: 'underline' }}>Sign Up</span>
             </a>
           </div>
         </form>

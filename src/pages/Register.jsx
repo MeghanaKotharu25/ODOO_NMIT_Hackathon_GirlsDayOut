@@ -29,8 +29,24 @@ export function Register() {
   const handleRegister = async (e) => {
     e.preventDefault();
     
-    if (!formData.companyName || !formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+    const trimmedName = formData.name.trim();
+    const trimmedEmail = formData.email.trim();
+    const trimmedCompany = formData.companyName.trim();
+    const trimmedPhone = formData.phone.trim();
+
+    if (!trimmedName || !trimmedEmail || !formData.password || !formData.confirmPassword) {
       addToast('Please fill out all required fields.', 'error');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      addToast('Please enter a valid email address.', 'error');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      addToast('Password must be at least 6 characters.', 'error');
       return;
     }
     
@@ -42,17 +58,41 @@ export function Register() {
     setIsSubmitting(true);
     
     try {
-      // In a real app, this would register the company and the admin user
-      if (signUp) {
-        await signUp(formData.email, formData.password);
-      }
+      const nameParts = trimmedName.split(/\s+/);
+      const firstName = nameParts[0] || 'Employee';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      const metadata = {
+        first_name: firstName,
+        last_name: lastName,
+        full_name: trimmedName,
+        phone: trimmedPhone,
+        company_name: trimmedCompany || 'Dayflow'
+      };
+
+      const result = await signUp(trimmedEmail, formData.password, metadata);
       
-      localStorage.setItem('dayflow_company_name', formData.companyName);
-      addToast('Company registration successful!', 'success');
-      navigate('/login');
+      if (trimmedCompany) {
+        localStorage.setItem('dayflow_company_name', trimmedCompany);
+      }
+
+      if (result?.session) {
+        addToast('Registration successful! Welcome to Dayflow.', 'success');
+        navigate('/loading');
+      } else {
+        addToast('Registration successful! Please check your email to verify or sign in.', 'success');
+        navigate('/login');
+      }
     } catch (err) {
       console.error('Registration error:', err);
-      addToast(err.message || 'Registration failed.', 'error');
+      const msg = err.message || '';
+      if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('unique constraint') || msg.toLowerCase().includes('user already exists')) {
+        addToast('An account with this email address already exists. Please sign in.', 'error');
+      } else if (msg.toLowerCase().includes('failed to fetch') || err.name === 'TypeError') {
+        addToast('Network Error: Unable to connect to Supabase. Check your connection.', 'error');
+      } else {
+        addToast(msg || 'Registration failed.', 'error');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -67,7 +107,7 @@ export function Register() {
             <h1 className="font-serif glitch-text" data-text="Dayflow">Dayflow</h1>
           </div>
           <p className="login-subtitle font-mono uppercase text-xs text-muted mt-2" style={{ textAlign: 'center' }}>
-            Admin / Company Registration
+            System Registration Terminal
           </p>
         </div>
         
