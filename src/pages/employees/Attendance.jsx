@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { attendanceService } from '../../services/attendanceService';
+import { calculateWorkHours, calculateScheduledHours } from '../../utils/attendanceUtils';
 import { Clock, LogIn, LogOut, CheckCircle2, AlertCircle } from 'lucide-react';
 import '../Attendance.css';
 
@@ -15,8 +16,8 @@ const formatDuration = (checkIn, checkOut, workHours) => {
     return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`;
   }
   if (!checkIn) return '--';
-  const duration = Math.max(0, new Date(checkOut || Date.now()) - new Date(checkIn));
-  const minutes = Math.floor(duration / 60000);
+  const hours = calculateWorkHours(checkIn, checkOut || new Date().toISOString());
+  const minutes = Math.round(hours * 60);
   return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`;
 };
 
@@ -175,16 +176,11 @@ export default function Attendance() {
               {history.length ? history.map((record) => {
                 let worked = record.work_hours || 0;
                 if (!worked && record.check_in && record.check_out) {
-                  const cin = new Date(record.check_in);
-                  const cout = new Date(record.check_out);
-                  if (!isNaN(cin) && !isNaN(cout)) {
-                    worked = (cout - cin) / 3600000;
-                  }
+                  worked = calculateWorkHours(record.check_in, record.check_out);
                 }
                 
-                // Assuming default shift is 8.5 hours if not specified
-                let scheduledHours = 8.5; 
-                // Since this view is only for the current user, we can assume standard hours if default_in_time is not joined
+                const scheduledHours = calculateScheduledHours(user?.profile?.default_in_time, user?.profile?.default_out_time);
+                
                 // Extra Hours
                 const extraHours = Math.max(0, worked - scheduledHours);
 

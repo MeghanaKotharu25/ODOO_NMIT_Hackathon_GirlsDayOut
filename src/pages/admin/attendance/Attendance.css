@@ -123,3 +123,23 @@
     min-width: 900px;
   }
 }
+
+/* Late Check-in Alert Styles */
+.admin-row-late {
+  background-color: var(--status-error-bg) !important;
+}
+
+.text-late {
+  color: var(--status-error);
+}
+
+.late-badge {
+  display: inline-block;
+  margin-left: var(--spacing-2);
+  padding: 2px 6px;
+  font-size: 0.65rem;
+  font-weight: bold;
+  background-color: var(--status-error);
+  color: white;
+  border-radius: 4px;
+}

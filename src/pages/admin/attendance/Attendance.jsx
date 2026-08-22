@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { AlertCircle, CalendarDays } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { attendanceService } from '../../../services/attendanceService';
+import { calculateWorkHours, calculateScheduledHours, isLateCheckIn } from '../../../utils/attendanceUtils';
 import './Attendance.css';
 
 
@@ -75,31 +76,29 @@ export default function Attendance() {
                 // Work Hours calculation
                 let worked = row.workHours || 0;
                 if (!worked && row.checkIn && row.checkOut) {
-                  const cin = new Date(row.checkIn);
-                  const cout = new Date(row.checkOut);
-                  if (!isNaN(cin) && !isNaN(cout)) {
-                    worked = (cout - cin) / 3600000;
-                  }
+                  worked = calculateWorkHours(row.checkIn, row.checkOut);
                 }
                 
                 // Scheduled Hours Calculation
-                let scheduledHours = 8.5; // default 09:00 to 17:30
-                if (row.profile.default_in_time && row.profile.default_out_time) {
-                  const [inH, inM] = row.profile.default_in_time.split(':').map(Number);
-                  const [outH, outM] = row.profile.default_out_time.split(':').map(Number);
-                  scheduledHours = (outH + outM/60) - (inH + inM/60);
-                }
+                const scheduledHours = calculateScheduledHours(row.profile.default_in_time, row.profile.default_out_time);
                 
                 // Extra Hours
                 const extraHours = Math.max(0, worked - scheduledHours);
+                
+                // Late Detection
+                const isLate = isLateCheckIn(row.checkIn, row.profile.default_in_time);
 
                 return (
-                  <tr key={row.profile.id}>
+                  <tr key={row.profile.id} className={isLate ? 'admin-row-late' : ''}>
                     <td>
                       <strong>{row.profile.first_name} {row.profile.last_name}</strong>
                       <small>{row.profile.employee_code} · {row.profile.department}</small>
                     </td>
-                    <td>{formatTime(row.checkIn)}</td>
+                    <td>
+                      <span className={isLate ? 'text-late font-mono font-bold' : ''}>
+                        {formatTime(row.checkIn)} {isLate && <span className="late-badge">LATE</span>}
+                      </span>
+                    </td>
                     <td>{formatTime(row.checkOut)}</td>
                     <td className="font-mono text-sm">
                       {worked > 0 ? `${Math.floor(worked)}h ${Math.round((worked % 1) * 60).toString().padStart(2, '0')}m` : '--'}

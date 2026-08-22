@@ -102,7 +102,7 @@ export function Register() {
     <div className="login-container">
       <div className="login-box" style={{ maxWidth: '500px' }}>
         <div className="login-header">
-          <div className="login-brand" style={{ justifyContent: 'center' }}>
+          <div className="login-brand">
             <div className="logo-mark-lg"></div>
             <h1 className="font-serif glitch-text" data-text="Dayflow">Dayflow</h1>
           </div>
@@ -111,66 +111,73 @@ export function Register() {
           </p>
         </div>
         
-        <form className="login-form mt-8" onSubmit={handleRegister}>
+        <form className="login-form" onSubmit={handleRegister}>
           
-          <div className="form-group flex-row-group">
-            <label className="form-label font-mono text-xs">Company Name :-</label>
+          <div className="form-group">
+            <label className="form-label font-mono uppercase text-xs">Company Name</label>
             <div className="input-with-button">
               <input 
                 type="text" 
                 name="companyName"
-                className="form-input flex-1" 
+                className="form-input" 
+                style={{ flex: 1 }}
                 value={formData.companyName}
                 onChange={handleChange}
+                placeholder="Dayflow Inc."
               />
-              <button type="button" className="icon-btn-primary ml-2" title="Upload Logo">
+              <button type="button" className="btn-secondary" style={{ padding: '0 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Upload Logo">
                 <UploadCloud size={18} />
               </button>
             </div>
           </div>
           
-          <div className="form-group flex-row-group">
-            <label className="form-label font-mono text-xs">Name :-</label>
+          <div className="form-group">
+            <label className="form-label font-mono uppercase text-xs">Full Name</label>
             <input 
               type="text" 
               name="name"
-              className="form-input flex-1" 
+              className="form-input" 
               value={formData.name}
               onChange={handleChange}
+              placeholder="Jane Doe"
             />
           </div>
           
-          <div className="form-group flex-row-group">
-            <label className="form-label font-mono text-xs">Email :-</label>
+          <div className="form-group">
+            <label className="form-label font-mono uppercase text-xs">Email Address</label>
             <input 
               type="email" 
               name="email"
-              className="form-input flex-1" 
+              className="form-input" 
               value={formData.email}
               onChange={handleChange}
+              placeholder="admin@company.com"
             />
           </div>
           
-          <div className="form-group flex-row-group">
-            <label className="form-label font-mono text-xs">Phone :-</label>
+          <div className="form-group">
+            <label className="form-label font-mono uppercase text-xs">Phone Number</label>
             <input 
               type="text" 
               name="phone"
-              className="form-input flex-1" 
+              className="form-input" 
               value={formData.phone}
               onChange={handleChange}
+              placeholder="+1 (555) 000-0000"
             />
           </div>
           
-          <div className="form-group flex-row-group">
-            <label className="form-label font-mono text-xs">Password :-</label>
-            <div className="password-wrapper flex-1">
+          <div className="form-group">
+            <label className="form-label font-mono uppercase text-xs">Password</label>
+            <div className="password-wrapper">
               <input 
                 type={showPassword ? 'text' : 'password'} 
                 name="password"
-                className="form-input w-full" 
+                className="form-input" 
+                style={{ width: '100%', paddingRight: '2.5rem' }}
                 value={formData.password}
                 onChange={handleChange}
+                placeholder="••••••••"
               />
               <button 
                 type="button" 
@@ -182,15 +189,17 @@ export function Register() {
             </div>
           </div>
           
-          <div className="form-group flex-row-group">
-            <label className="form-label font-mono text-xs">Confirm Password :-</label>
-            <div className="password-wrapper flex-1">
+          <div className="form-group">
+            <label className="form-label font-mono uppercase text-xs">Confirm Password</label>
+            <div className="password-wrapper">
               <input 
                 type={showConfirmPassword ? 'text' : 'password'} 
                 name="confirmPassword"
-                className="form-input w-full" 
+                className="form-input" 
+                style={{ width: '100%', paddingRight: '2.5rem' }}
                 value={formData.confirmPassword}
                 onChange={handleChange}
+                placeholder="••••••••"
               />
               <button 
                 type="button" 
@@ -204,19 +213,20 @@ export function Register() {
           
           <button 
             type="submit" 
-            className="btn-primary login-btn mt-6 w-full justify-center py-4"
+            className="btn-primary login-btn mt-4 w-full justify-center py-4"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Registering...' : 'Sign Up'}
+            {isSubmitting ? 'REGISTERING...' : 'REGISTER'}
           </button>
           
-          <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/login'); }} style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-              Already have an account ? <span style={{ color: 'var(--text-primary)' }}>Sign In</span>
-            </a>
-          </div>
         </form>
-        
+
+        <div className="login-footer">
+          <span className="text-muted font-mono text-xs">v2.1.0-RC</span>
+          <a href="#" onClick={(e) => { e.preventDefault(); navigate('/login'); }} style={{ color: 'var(--text-primary)', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', textDecoration: 'none' }}>
+            Sign In Instead →
+          </a>
+        </div>
       </div>
     </div>
   );

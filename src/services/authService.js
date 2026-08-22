@@ -54,11 +54,22 @@ export const authService = {
       if (error || !user) return null;
 
       // Retrieve user profile from public.profiles
-      const { data: profile } = await supabase
+      let query = supabase
         .from('profiles')
-        .select('id, employee_code, first_name, last_name, email, role, department, position, status')
+        .select('id, employee_code, first_name, last_name, email, role, department, position, status, default_in_time, default_out_time')
         .eq('id', user.id)
         .maybeSingle();
+
+      let { data: profile, error: profileError } = await query;
+      
+      if (profileError && profileError.message && profileError.message.includes('default_in_time')) {
+        const fallback = await supabase
+          .from('profiles')
+          .select('id, employee_code, first_name, last_name, email, role, department, position, status')
+          .eq('id', user.id)
+          .maybeSingle();
+        profile = fallback.data;
+      }
 
       return {
         ...user,
