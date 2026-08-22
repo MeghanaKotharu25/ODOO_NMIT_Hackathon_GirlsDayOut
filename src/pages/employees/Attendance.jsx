@@ -94,7 +94,7 @@ export default function Attendance() {
           <span className="terminal-label"><Clock size={14} /> Current time</span>
           <strong className="live-clock font-mono">{currentTime.toLocaleTimeString()}</strong>
           <div className="attendance-actions">
-            <button className="btn-action start" onClick={handleCheckIn} disabled={loading || Boolean(todayRecord)}>
+            <button className="btn-action start" onClick={handleCheckIn} disabled={loading || Boolean(todayRecord?.check_in)}>
               <LogIn size={16} /> {loading ? 'Saving...' : 'Check in'}
             </button>
             <button className="btn-action stop" onClick={handleCheckOut} disabled={loading || !todayRecord?.check_in || Boolean(todayRecord?.check_out)}>
