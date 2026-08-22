@@ -1,8 +1,9 @@
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 export const authService = {
   // Sign up a new user with email & password
   signUp: async (email, password) => {
+    if (!isSupabaseConfigured) throw new Error('Demo mode: Supabase not configured');
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -13,6 +14,7 @@ export const authService = {
 
   // Sign in an existing user with email & password
   signIn: async (email, password) => {
+    if (!isSupabaseConfigured) throw new Error('Demo mode: Supabase not configured');
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -23,12 +25,14 @@ export const authService = {
 
   // Sign out current authenticated session
   signOut: async () => {
+    if (!isSupabaseConfigured) return;
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   },
 
   // Get active session
   getCurrentSession: async () => {
+    if (!isSupabaseConfigured) return null;
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error) throw error;
@@ -41,6 +45,7 @@ export const authService = {
 
   // Get current authenticated user details along with profile role
   getCurrentUser: async () => {
+    if (!isSupabaseConfigured) return null;
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
       if (error || !user) return null;
@@ -65,6 +70,7 @@ export const authService = {
 
   // Subscribe to auth state changes
   onAuthStateChange: (callback) => {
+    if (!isSupabaseConfigured) return { unsubscribe: () => {} };
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         callback(event, session);

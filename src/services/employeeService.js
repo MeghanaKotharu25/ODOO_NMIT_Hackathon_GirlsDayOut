@@ -1,8 +1,10 @@
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 export const employeeService = {
   // Fetch all employees from Supabase profiles
   getEmployees: async () => {
+    if (!isSupabaseConfigured) return [];
+
     const { data: profiles, error } = await supabase
       .from('profiles')
       .select(`
@@ -70,6 +72,8 @@ export const employeeService = {
 
   // Fetch single employee by employee code or UUID
   getEmployeeById: async (id) => {
+    if (!isSupabaseConfigured) return null;
+
     const isUuid = id.includes('-') && id.length === 36;
     let query = supabase.from('profiles').select('*');
     if (isUuid) {
