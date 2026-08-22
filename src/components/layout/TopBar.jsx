@@ -1,10 +1,33 @@
-import { NavLink, useLocation } from 'react-router-dom';
-import { Bell, Search, LayoutDashboard, Users, Clock, Calendar, HelpCircle, Settings, UserCircle } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Bell, Search, LayoutDashboard, Users, Clock, Calendar, HelpCircle, Settings, UserCircle, LogOut } from 'lucide-react';
 import { mockCurrentUser } from '../../data/mockData';
+import { useToast } from '../../context/ToastContext';
 import './Layout.css';
 
 export function TopBar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { addToast } = useToast();
+  
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const notifRef = useRef(null);
+  const profileRef = useRef(null);
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
   
   const mainNav = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -59,20 +82,72 @@ export function TopBar() {
 
           <div className="search-container">
             <Search className="search-icon" size={16} />
-            <input type="text" placeholder="Query..." className="search-input font-mono" />
+            <input 
+              type="text" 
+              placeholder="Query..." 
+              className="search-input font-mono" 
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') addToast(`Search results for "${e.target.value}" not found in mock data.`, 'error');
+              }}
+            />
           </div>
           
-          <button className="icon-btn action-btn">
-            <Bell size={18} />
-            <span className="notification-badge"></span>
-          </button>
+          <div className="relative-container" ref={notifRef}>
+            <button 
+              className="icon-btn action-btn"
+              onClick={() => setShowNotifications(!showNotifications)}
+            >
+              <Bell size={18} />
+              <span className="notification-badge"></span>
+            </button>
+            
+            {showNotifications && (
+              <div className="popover-menu notif-menu">
+                <div className="popover-header">Recent Alerts</div>
+                <div className="popover-item">
+                  <span className="popover-title">Leave Request</span>
+                  <span className="popover-desc text-muted">2 pending requests need approval.</span>
+                </div>
+                <div className="popover-item">
+                  <span className="popover-title text-error">Absence Alert</span>
+                  <span className="popover-desc text-muted">David Kim is absent unexcused.</span>
+                </div>
+              </div>
+            )}
+          </div>
           
-          <div className="user-profile-menu">
-            <img 
-              src={mockCurrentUser.avatarUrl} 
-              alt={mockCurrentUser.firstName} 
-              className="avatar-sm"
-            />
+          <div className="relative-container" ref={profileRef}>
+            <div 
+              className="user-profile-menu"
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
+            >
+              <img 
+                src={mockCurrentUser.avatarUrl} 
+                alt={mockCurrentUser.firstName} 
+                className="avatar-sm"
+              />
+            </div>
+
+            {showProfileMenu && (
+              <div className="popover-menu profile-menu">
+                <div className="popover-header profile-header">
+                  <span className="font-mono">{mockCurrentUser.firstName} {mockCurrentUser.lastName}</span>
+                  <span className="text-muted text-xs uppercase">{mockCurrentUser.role}</span>
+                </div>
+                <button 
+                  className="popover-action"
+                  onClick={() => { setShowProfileMenu(false); navigate(`/employees/${mockCurrentUser.id}`); }}
+                >
+                  <UserCircle size={14} /> My Dossier
+                </button>
+                <button 
+                  className="popover-action text-error"
+                  onClick={() => { setShowProfileMenu(false); addToast('Session terminated.', 'error'); }}
+                >
+                  <LogOut size={14} /> Terminate Session
+                </button>
+              </div>
+            )}
           </div>
         </div>
         

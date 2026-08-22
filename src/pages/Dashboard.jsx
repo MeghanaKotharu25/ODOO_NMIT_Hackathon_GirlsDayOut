@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer
 } from 'recharts';
@@ -13,6 +14,8 @@ const attendanceData = [
 ];
 
 export function Dashboard() {
+  const navigate = useNavigate();
+
   return (
     <div className="dashboard-editorial">
       
@@ -55,7 +58,7 @@ export function Dashboard() {
                 <span className="ledger-tag error">Unexcused</span>
               </div>
               <p className="ledger-text"><strong>David Kim</strong> is absent without requested leave.</p>
-              <button className="btn-link">Review Record</button>
+              <button className="btn-link" onClick={() => navigate('/employees/EMP-005')}>Review Record</button>
             </li>
             
             <li className="ledger-item">
@@ -64,7 +67,7 @@ export function Dashboard() {
                 <span className="ledger-tag info">Pending</span>
               </div>
               <p className="ledger-text"><strong>2 leave requests</strong> require your approval.</p>
-              <button className="btn-link">View Queue</button>
+              <button className="btn-link" onClick={() => navigate('/time-off')}>View Queue</button>
             </li>
             
             <li className="ledger-item">
@@ -73,7 +76,7 @@ export function Dashboard() {
                 <span className="ledger-tag warning">Late</span>
               </div>
               <p className="ledger-text"><strong>5 employees</strong> checked in after 09:00 AM.</p>
-              <button className="btn-link">See Details</button>
+              <button className="btn-link" onClick={() => navigate('/attendance')}>See Details</button>
             </li>
           </ul>
         </div>

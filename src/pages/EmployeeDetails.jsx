@@ -3,12 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Mail, Phone, MapPin, Briefcase, Calendar as CalendarIcon, Shield, FileText } from 'lucide-react';
 import { mockEmployees } from '../data/mockData';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import './EmployeeDetails.css';
 
 export function EmployeeDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState('general');
 
   const employee = mockEmployees.find(emp => emp.id === id);
@@ -134,7 +136,10 @@ export function EmployeeDetails() {
                   <span className="doc-name font-mono">Resume_Updated_2023.pdf</span>
                   <span className="doc-meta">Added 2023-01-15 • 2.4 MB</span>
                 </div>
-                <button className="btn-link">Download</button>
+                <button 
+                  className="btn-link"
+                  onClick={() => addToast('Downloading Resume_Updated_2023.pdf...', 'success')}
+                >Download</button>
               </div>
               <div className="document-item">
                 <div className="doc-icon"><FileText size={20} /></div>
@@ -142,7 +147,10 @@ export function EmployeeDetails() {
                   <span className="doc-name font-mono">Contract_Signed.pdf</span>
                   <span className="doc-meta">Added {employee.joinDate} • 1.1 MB</span>
                 </div>
-                <button className="btn-link">Download</button>
+                <button 
+                  className="btn-link"
+                  onClick={() => addToast('Downloading Contract_Signed.pdf...', 'success')}
+                >Download</button>
               </div>
             </div>
           </div>

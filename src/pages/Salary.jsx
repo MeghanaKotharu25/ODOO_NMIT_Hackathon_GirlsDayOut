@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Download, FileText, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { mockEmployees } from '../data/mockData';
+import { useToast } from '../context/ToastContext';
 import './Salary.css';
 
 export function Salary() {
   const { user } = useAuth();
+  const { addToast } = useToast();
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(mockEmployees[0].id);
   
   // In a real app, this would be fetched based on the selected employee or current user
@@ -146,7 +148,10 @@ export function Salary() {
               <td className="font-mono text-right">{formatCurrency(salary.net)}</td>
               <td><span className="badge badge-success">Processed</span></td>
               <td className="text-right">
-                <button className="btn-link"><Download size={14} className="inline-icon" /> PDF</button>
+                <button 
+                  className="btn-link"
+                  onClick={() => addToast('Generating Payslip PDF for September 2024...', 'success')}
+                ><Download size={14} className="inline-icon" /> PDF</button>
               </td>
             </tr>
             <tr>
@@ -154,7 +159,10 @@ export function Salary() {
               <td className="font-mono text-right">{formatCurrency(salary.net)}</td>
               <td><span className="badge badge-success">Processed</span></td>
               <td className="text-right">
-                <button className="btn-link"><Download size={14} className="inline-icon" /> PDF</button>
+                <button 
+                  className="btn-link"
+                  onClick={() => addToast('Generating Payslip PDF for August 2024...', 'success')}
+                ><Download size={14} className="inline-icon" /> PDF</button>
               </td>
             </tr>
           </tbody>
