@@ -1,20 +1,27 @@
 import { useState, useRef, useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { LogOut, UserCircle } from 'lucide-react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Bell, LayoutDashboard, Users, Clock, Calendar, HelpCircle, Settings, UserCircle, LogOut, DollarSign } from 'lucide-react';
 import { Magnetic } from './Magnetic';
 import { useAuth } from '../../context/AuthContext';
 import './Layout.css';
 
 export function TopBar() {
+  const location = useLocation();
   const navigate = useNavigate();
   const { logout, user } = useAuth();
+  const isAdmin = (user?.profile?.role || user?.role || '').toLowerCase() === 'admin';
   
+  const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const notifRef = useRef(null);
   const profileRef = useRef(null);
 
   // Close menus when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setShowProfileMenu(false);
       }
@@ -24,53 +31,99 @@ export function TopBar() {
   }, []);
   
   const mainNav = [
-    { name: 'Employees', path: '/employees' },
-    { name: 'Attendance', path: '/attendance' },
-    { name: 'Time Off', path: '/time-off' }
+    { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+    { name: 'Employees', path: '/employees', icon: Users },
+    { name: 'Attendance', path: isAdmin ? '/admin/attendance' : '/attendance', icon: Clock },
+    { name: 'Time Off', path: '/time-off', icon: Calendar },
+    { name: 'Payroll', path: '/salary', icon: DollarSign },
+  ];
+
+  const secondaryNav = [
+    { name: 'Help', path: '/help', icon: HelpCircle },
+    { name: 'Settings', path: '/settings', icon: Settings },
+    { name: 'Profile', path: '/profile', icon: UserCircle },
   ];
 
   return (
-    <header className="topbar-editorial" style={{ borderBottom: '1px solid var(--border-light)' }}>
-      <div className="topbar-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+    <header className="topbar-editorial">
+      <div className="topbar-container">
         
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <div className="topbar-brand" style={{ paddingRight: 'var(--spacing-6)', borderRight: '1px solid var(--border-strong)' }}>
-            <span className="logo-text font-serif" style={{ fontSize: '1.2rem', color: '#FFF' }}>Company Logo</span>
-          </div>
+        <div className="topbar-brand">
+          <div className="logo-mark"></div>
+          <span className="logo-text font-serif">Dayflow</span>
+        </div>
 
-          <nav className="topbar-nav main-nav" style={{ marginLeft: 'var(--spacing-6)' }}>
-            {mainNav.map((item) => (
+        <nav className="topbar-nav main-nav">
+          {mainNav.map((item) => (
+            <NavLink
+              key={item.name}
+              to={item.path}
+              className={({ isActive }) => `topnav-item ${isActive ? 'active' : ''}`}
+            >
+              <item.icon className="nav-icon" size={16} />
+              <span>{item.name}</span>
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="topbar-right">
+          <nav className="topbar-nav secondary-nav">
+            {secondaryNav.map((item) => (
               <NavLink
                 key={item.name}
                 to={item.path}
-                className={({ isActive }) => `topnav-item ${isActive ? 'active' : ''}`}
-                style={{ padding: '0.5rem 1rem' }}
+                className={({ isActive }) => `topnav-item icon-only ${isActive ? 'active' : ''}`}
+                title={item.name}
               >
-                <span>{item.name}</span>
+                <item.icon className="nav-icon" size={18} />
               </NavLink>
             ))}
           </nav>
-        </div>
 
-        <div className="topbar-right">
+          <div className="vertical-divider"></div>
+          
+          <div className="relative-container" ref={notifRef}>
+            <Magnetic strength={0.2}>
+              <button 
+                className="icon-btn action-btn"
+                onClick={() => setShowNotifications(!showNotifications)}
+              >
+                <Bell size={18} />
+                <span className="notification-badge"></span>
+              </button>
+            </Magnetic>
+            
+            {showNotifications && (
+              <div className="popover-menu notif-menu">
+                <div className="popover-header">Recent Alerts</div>
+                <div className="popover-item">
+                  <span className="popover-title">Leave Request</span>
+                  <span className="popover-desc text-muted">2 pending requests need approval.</span>
+                </div>
+                <div className="popover-item">
+                  <span className="popover-title text-error">Absence Alert</span>
+                  <span className="popover-desc text-muted">David Kim is absent unexcused.</span>
+                </div>
+              </div>
+            )}
+          </div>
+          
           <div className="relative-container" ref={profileRef}>
             <Magnetic strength={0.2}>
               <div 
                 className="user-profile-menu cursor-pointer"
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  backgroundColor: '#ff8a8a', // Pink circle as per wireframe
-                  border: '2px solid transparent',
-                  transition: 'border-color 0.2s'
-                }}
-              />
+              >
+                <img 
+                  src={user?.avatarUrl || user?.avatar_url || user?.profile?.avatar_url || `https://i.pravatar.cc/150?u=${user?.id || 'EMP'}`} 
+                  alt={user?.firstName || user?.first_name || user?.profile?.first_name || 'User'} 
+                  className="avatar-sm"
+                />
+              </div>
             </Magnetic>
 
             {showProfileMenu && (
-              <div className="popover-menu profile-menu" style={{ top: '120%' }}>
+              <div className="popover-menu profile-menu">
                 <div className="popover-header profile-header">
                   <span className="font-mono">{user?.firstName || user?.first_name || user?.profile?.first_name || 'User'} {user?.lastName || user?.last_name || user?.profile?.last_name || ''}</span>
                   <span className="text-muted text-xs uppercase">{user?.role || user?.profile?.role || 'EMPLOYEE'}</span>
