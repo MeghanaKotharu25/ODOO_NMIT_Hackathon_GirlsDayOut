@@ -308,3 +308,18 @@
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ==========================================================================
+   ONLINE INDICATOR
+   ========================================================================== */
+.online-indicator-dot {
+  position: absolute;
+  bottom: 0;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  background-color: #22c55e;
+  border: 2px solid var(--bg-surface);
+  border-radius: 50%;
+  z-index: 10;
+}

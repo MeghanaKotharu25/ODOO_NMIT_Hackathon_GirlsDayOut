@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Bell, LayoutDashboard, Users, Clock, Calendar, HelpCircle, Settings, UserCircle, LogOut } from 'lucide-react';
+import { Bell, LayoutDashboard, Users, Clock, Calendar, HelpCircle, Settings, UserCircle, LogOut, DollarSign } from 'lucide-react';
 import { Magnetic } from './Magnetic';
 import { useAuth } from '../../context/AuthContext';
 import './Layout.css';
@@ -30,10 +30,17 @@ export function TopBar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
   
-  const mainNav = [
+  const mainNav = isAdmin ? [
+    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Employees', path: '/employees', icon: Users },
-    { name: 'Attendance', path: isAdmin ? '/admin/attendance' : '/attendance', icon: Clock },
+    { name: 'Attendance', path: '/admin/attendance', icon: Clock },
     { name: 'Time Off', path: '/time-off', icon: Calendar },
+    { name: 'Payroll', path: '/payroll', icon: DollarSign },
+  ] : [
+    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { name: 'Attendance', path: '/attendance', icon: Clock },
+    { name: 'Time Off', path: '/time-off', icon: Calendar },
+    { name: 'My Profile', path: '/profile', icon: UserCircle },
   ];
 
   const secondaryNav = [
@@ -117,6 +124,9 @@ export function TopBar() {
                   alt={user?.firstName || user?.first_name || user?.profile?.first_name || 'User'} 
                   className="avatar-sm"
                 />
+                {user && (
+                  <span className="online-indicator-dot" title="Online"></span>
+                )}
               </div>
             </Magnetic>
 
@@ -125,6 +135,12 @@ export function TopBar() {
                 <div className="popover-header profile-header">
                   <span className="font-mono">{user?.firstName || user?.first_name || user?.profile?.first_name || 'User'} {user?.lastName || user?.last_name || user?.profile?.last_name || ''}</span>
                   <span className="text-muted text-xs uppercase">{user?.role || user?.profile?.role || 'EMPLOYEE'}</span>
+                  {user && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                      <span className="text-xs text-green-600 dark:text-green-400 font-medium">Online</span>
+                    </div>
+                  )}
                 </div>
                 <button 
                   className="popover-action"
