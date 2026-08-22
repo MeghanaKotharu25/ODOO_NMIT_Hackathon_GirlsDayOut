@@ -138,7 +138,7 @@ export default function Attendance() {
                   <td>{row.profile.department || row.profile.position || 'Employee'}</td>
                   <td>{formatTime(row.checkIn)}</td>
                   <td>{formatTime(row.checkOut)}</td>
-                  <td className="font-mono">{formatHours(row)}<small className="extra-hours">+{formatExtraHours(row)} extra</small></td>
+                  <td className="font-mono">{formatHours(row)}<small className="extra-hours">{formatExtraHours(row) === '--' ? '--' : `+${formatExtraHours(row)} extra`}</small></td>
                   <td>
                     <select
                       className={`admin-status-select ${drafts[row.profile.id]?.status}`}
