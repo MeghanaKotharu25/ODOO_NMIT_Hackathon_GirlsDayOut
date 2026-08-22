@@ -151,6 +151,19 @@ export function Login() {
               </button>
             </div>
           </div>
+
+          <div style={{ marginTop: '1.5rem', textAlign: 'center', borderTop: '1px solid var(--border-subtle, #333)', paddingTop: '1rem' }}>
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>
+              Need Organization Access?{' '}
+              <a
+                href="#"
+                onClick={(e) => { e.preventDefault(); navigate('/register'); }}
+                style={{ color: 'var(--text-primary)', fontWeight: 600, textDecoration: 'underline' }}
+              >
+                HR / Admin Sign Up
+              </a>
+            </span>
+          </div>
         </form>
 
         <div className="login-footer">

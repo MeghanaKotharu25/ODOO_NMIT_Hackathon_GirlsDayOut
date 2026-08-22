@@ -17,7 +17,7 @@ export function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const { signUp } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
@@ -28,7 +28,7 @@ export function Register() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    
+
     const trimmedName = formData.name.trim();
     const trimmedEmail = formData.email.trim();
     const trimmedCompany = formData.companyName.trim();
@@ -49,14 +49,14 @@ export function Register() {
       addToast('Password must be at least 6 characters.', 'error');
       return;
     }
-    
+
     if (formData.password !== formData.confirmPassword) {
       addToast('Passwords do not match.', 'error');
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       const nameParts = trimmedName.split(/\s+/);
       const firstName = nameParts[0] || 'Employee';
@@ -67,20 +67,21 @@ export function Register() {
         last_name: lastName,
         full_name: trimmedName,
         phone: trimmedPhone,
-        company_name: trimmedCompany || 'Dayflow'
+        company_name: trimmedCompany || 'Dayflow',
+        role: 'admin'
       };
 
       const result = await signUp(trimmedEmail, formData.password, metadata);
-      
+
       if (trimmedCompany) {
         localStorage.setItem('dayflow_company_name', trimmedCompany);
       }
 
       if (result?.session) {
-        addToast('Registration successful! Welcome to Dayflow.', 'success');
+        addToast('HR/Admin Registration successful! Welcome to Dayflow.', 'success');
         navigate('/loading');
       } else {
-        addToast('Registration successful! Please check your email to verify or sign in.', 'success');
+        addToast('HR/Admin Registration successful! Please check your email to verify or sign in.', 'success');
         navigate('/login');
       }
     } catch (err) {
@@ -102,24 +103,24 @@ export function Register() {
     <div className="login-container">
       <div className="login-box" style={{ maxWidth: '500px' }}>
         <div className="login-header">
-          <div className="login-brand">
+          <div className="login-brand" style={{ justifyContent: 'center' }}>
             <div className="logo-mark-lg"></div>
             <h1 className="font-serif glitch-text" data-text="Dayflow">Dayflow</h1>
           </div>
           <p className="login-subtitle font-mono uppercase text-xs text-muted mt-2" style={{ textAlign: 'center' }}>
-            System Registration Terminal
+            HR & Admin Registration Terminal
           </p>
         </div>
-        
+
         <form className="login-form" onSubmit={handleRegister}>
-          
+
           <div className="form-group">
             <label className="form-label font-mono uppercase text-xs">Company Name</label>
             <div className="input-with-button">
-              <input 
-                type="text" 
+              <input
+                type="text"
                 name="companyName"
-                className="form-input" 
+                className="form-input"
                 style={{ flex: 1 }}
                 value={formData.companyName}
                 onChange={handleChange}
@@ -130,57 +131,57 @@ export function Register() {
               </button>
             </div>
           </div>
-          
+
           <div className="form-group">
             <label className="form-label font-mono uppercase text-xs">Full Name</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               name="name"
-              className="form-input" 
+              className="form-input"
               value={formData.name}
               onChange={handleChange}
               placeholder="Jane Doe"
             />
           </div>
-          
+
           <div className="form-group">
             <label className="form-label font-mono uppercase text-xs">Email Address</label>
-            <input 
-              type="email" 
+            <input
+              type="email"
               name="email"
-              className="form-input" 
+              className="form-input"
               value={formData.email}
               onChange={handleChange}
               placeholder="admin@company.com"
             />
           </div>
-          
+
           <div className="form-group">
             <label className="form-label font-mono uppercase text-xs">Phone Number</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               name="phone"
-              className="form-input" 
+              className="form-input"
               value={formData.phone}
               onChange={handleChange}
               placeholder="+1 (555) 000-0000"
             />
           </div>
-          
+
           <div className="form-group">
             <label className="form-label font-mono uppercase text-xs">Password</label>
             <div className="password-wrapper">
-              <input 
-                type={showPassword ? 'text' : 'password'} 
+              <input
+                type={showPassword ? 'text' : 'password'}
                 name="password"
-                className="form-input" 
+                className="form-input"
                 style={{ width: '100%', paddingRight: '2.5rem' }}
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="••••••••"
               />
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="password-toggle"
                 onClick={() => setShowPassword(!showPassword)}
               >
@@ -188,21 +189,21 @@ export function Register() {
               </button>
             </div>
           </div>
-          
+
           <div className="form-group">
             <label className="form-label font-mono uppercase text-xs">Confirm Password</label>
             <div className="password-wrapper">
-              <input 
-                type={showConfirmPassword ? 'text' : 'password'} 
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
                 name="confirmPassword"
-                className="form-input" 
+                className="form-input"
                 style={{ width: '100%', paddingRight: '2.5rem' }}
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 placeholder="••••••••"
               />
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="password-toggle"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               >
@@ -210,15 +211,15 @@ export function Register() {
               </button>
             </div>
           </div>
-          
-          <button 
-            type="submit" 
+
+          <button
+            type="submit"
             className="btn btn-primary login-btn mt-4 w-full justify-center py-4"
             disabled={isSubmitting}
           >
             {isSubmitting ? 'REGISTERING...' : 'REGISTER'}
           </button>
-          
+
         </form>
 
         <div className="login-footer">

@@ -113,15 +113,20 @@ export const employeeService = {
       throw new Error('Database Error: Supabase is not configured.');
     }
 
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
     const { data, error } = await supabase.functions.invoke('create-employee', {
       body: employeeData,
+      headers,
     });
 
     if (error) {
       console.error('Edge Function invocation error:', error);
-      let errorMsg = error.message;
-      if (errorMsg.includes('Failed to send a request to the Edge Function') || errorMsg.includes('FunctionsFetchError')) {
-        errorMsg = 'Failed to connect to Edge Function. Please verify Edge Function deployment and network connection.';
+      let errorMsg = error.message || '';
+      if (errorMsg.includes('Failed to send a request to the Edge Function') || errorMsg.includes('FunctionsFetchError') || errorMsg.includes('Failed to fetch')) {
+        errorMsg = 'Failed to connect to Edge Function. Please ensure Edge Function create-employee is deployed to your Supabase project.';
       }
       throw new Error(errorMsg);
     }

@@ -33,17 +33,8 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/loading" element={<LoadingScreen />} />
 
-        {/* Admin-only Registration Route */}
-        <Route
-          path="/register"
-          element={
-            <ProtectedRoute>
-              <RoleProtectedRoute role="admin">
-                <Register />
-              </RoleProtectedRoute>
-            </ProtectedRoute>
-          }
-        />
+        {/* Public HR / Admin Registration Route */}
+        <Route path="/register" element={<Register />} />
 
         {/* Protected Routes Wrapper */}
         <Route
