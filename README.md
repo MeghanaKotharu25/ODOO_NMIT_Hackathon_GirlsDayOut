@@ -16,7 +16,10 @@ For the NMIT Hackathon "Girls Day Out", we designed Dayflow with a **"quiet, pre
 Aggregated operational summaries, SVG-based chart visualizations (via Recharts), staggered entry sequences, and a live scrolling system ticker.
 
 ### 👥 Personnel Roster (Employees)
-Real-time filtering by name and department. Integrated slide-out drawer for adding new records. Custom employee ID generation formula (`[Company]+[Initials]+[Year]+[Serial]`). Backend-connected via Supabase Edge Function (`create-employee`).
+Real-time filtering by name and department. Integrated slide-out drawer for adding new records (Admin Only). 
+- **Smart Onboarding**: Custom employee ID generation formula (`[Company]+[Initials]+[Year]+[Serial]`). 
+- **Automated Security**: System automatically generates a secure temporary password for new employees upon creation.
+- Backend-connected via Supabase Edge Function (`create-employee`).
 
 ### 📋 Employee Dossier (Employee Details)
 Three-tab detailed profile view:
@@ -40,6 +43,8 @@ Cinematic financial ledger interface with:
 
 ## 🔐 Architecture & Security
 - **Supabase Backend**: Fully integrated BaaS handling Authentication, PostgreSQL Database, and Edge Functions.
+- **Role-Based Access Control**: Strict segregation between Admin and Employee roles (e.g., standard employees cannot register new personnel).
+- **Self-Service Security**: Employees can securely change their auto-generated system passwords via their profile dashboard.
 - **Row Level Security (RLS)**: Enforced on all tables — employees can only view their own private data; admins retain global access via Service Role Key.
 - **Edge Functions**: Secure `create-employee` function that bypasses frontend auth state to safely create users server-side.
 - **Demo Mode**: When Supabase credentials are not configured (e.g., on Vercel), the app automatically activates Demo Mode with a mock admin user, ensuring the full UI renders without any backend dependency.
