@@ -344,7 +344,7 @@ export function EmployeeDetails() {
                     
                     <div>
                       <span className="text-yellow-500 block">Computation Type: Fixed Amount or Percentage of Wage</span>
-                      Values Percentage field (e.g. 50% for Basic, 40% of Basic for HRA, Standard Allowance 15%, Performance Bonus 8.33%, Leave Travel Allowance 8.33%, Fixed allowance is > wage - Total of all the components)
+                      Values Percentage field (e.g. 50% for Basic, 40% of Basic for HRA, Standard Allowance 15%, Performance Bonus 8.33%, Leave Travel Allowance 8.33%, Fixed allowance is &gt; wage - Total of all the components)
                       Salary component values should auto-update when the wage amount changes. The total of all components should not exceed the defined wage.
                     </div>
                     
