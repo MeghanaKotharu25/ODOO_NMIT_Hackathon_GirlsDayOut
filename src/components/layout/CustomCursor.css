@@ -17,27 +17,29 @@ a, button, input, select, textarea {
   border-radius: 50%;
   pointer-events: none;
   z-index: 9999;
-  transform: translate(-50%, -50%);
-  transition: width 0.2s, height 0.2s, background-color 0.2s;
+  top: 0;
+  left: 0;
 }
 
 .cursor-outline {
   position: fixed;
-  width: 40px;
-  height: 40px;
+  top: 0;
+  left: 0;
   border: 1px solid var(--border-heavy);
   border-radius: 50%;
   pointer-events: none;
   z-index: 9998;
-  transform: translate(-50%, -50%);
-  transition: width 0.2s var(--ease-fluid), height 0.2s var(--ease-fluid), background-color 0.2s var(--ease-fluid), border-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.cursor-outline.hover {
-  width: 60px;
-  height: 60px;
-  background-color: rgba(0, 0, 0, 0.05);
-  border-color: var(--text-primary);
+.cursor-text {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: var(--text-primary);
 }
 
 /* Hide custom cursor on touch devices */

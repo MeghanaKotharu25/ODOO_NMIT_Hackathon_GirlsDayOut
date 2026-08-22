@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, X } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Magnetic } from '../components/layout/Magnetic';
 import { mockEmployees } from '../data/mockData';
 import { useToast } from '../context/ToastContext';
 import './Employees.css';
@@ -99,23 +101,29 @@ export function Employees() {
             ))}
           </select>
 
-          <button 
-            type="button"
-            className="btn-primary" 
-            style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}
-            onClick={() => setIsDrawerOpen(true)}
-          >
-            + Add Record
-          </button>
+          <Magnetic strength={0.15}>
+            <button 
+              type="button"
+              className="btn-primary" 
+              style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}
+              onClick={() => setIsDrawerOpen(true)}
+            >
+              + Add Record
+            </button>
+          </Magnetic>
         </div>
       </header>
 
       <div className="roster-grid">
-        {filteredEmployees.map(emp => (
-          <div 
+        {filteredEmployees.map((emp, index) => (
+          <motion.div 
             key={emp.id} 
             className="roster-card"
             onClick={() => navigate(`/employees/${emp.id}`)}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
+            whileHover={{ y: -4, transition: { duration: 0.2, ease: "easeOut" } }}
           >
             <div className="roster-image-container">
               <img src={emp.avatarUrl} alt={emp.firstName} className="roster-avatar" />
@@ -135,7 +143,7 @@ export function Employees() {
                 <p className="role-dept font-mono">{emp.department}</p>
               </div>
             </div>
-          </div>
+          </motion.div>
         ))}
         {filteredEmployees.length === 0 && (
           <div className="roster-empty">

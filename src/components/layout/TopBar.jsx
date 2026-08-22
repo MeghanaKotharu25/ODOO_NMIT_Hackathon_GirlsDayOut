@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Bell, Search, LayoutDashboard, Users, Clock, Calendar, HelpCircle, Settings, UserCircle, LogOut } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Magnetic } from './Magnetic';
 import { mockCurrentUser } from '../../data/mockData';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
@@ -53,15 +55,27 @@ export function TopBar() {
           <span className="logo-text font-serif">Dayflow</span>
         </div>
 
-        <nav className="topbar-nav main-nav">
+        <nav className="topbar-nav main-nav" style={{ position: 'relative' }}>
           {mainNav.map((item) => (
             <NavLink
               key={item.name}
               to={item.path}
               className={({ isActive }) => `topnav-item ${isActive ? 'active' : ''}`}
             >
-              <item.icon className="nav-icon" size={16} />
-              <span>{item.name}</span>
+              {({ isActive }) => (
+                <>
+                  <item.icon className="nav-icon" size={16} />
+                  <span>{item.name}</span>
+                  {isActive && (
+                    <motion.div
+                      layoutId="navIndicator"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-black"
+                      initial={false}
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    />
+                  )}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -95,13 +109,15 @@ export function TopBar() {
           </div>
           
           <div className="relative-container" ref={notifRef}>
-            <button 
-              className="icon-btn action-btn"
-              onClick={() => setShowNotifications(!showNotifications)}
-            >
-              <Bell size={18} />
-              <span className="notification-badge"></span>
-            </button>
+            <Magnetic strength={0.2}>
+              <button 
+                className="icon-btn action-btn"
+                onClick={() => setShowNotifications(!showNotifications)}
+              >
+                <Bell size={18} />
+                <span className="notification-badge"></span>
+              </button>
+            </Magnetic>
             
             {showNotifications && (
               <div className="popover-menu notif-menu">
@@ -119,16 +135,18 @@ export function TopBar() {
           </div>
           
           <div className="relative-container" ref={profileRef}>
-            <div 
-              className="user-profile-menu"
-              onClick={() => setShowProfileMenu(!showProfileMenu)}
-            >
-              <img 
-                src={mockCurrentUser.avatarUrl} 
-                alt={mockCurrentUser.firstName} 
-                className="avatar-sm"
-              />
-            </div>
+            <Magnetic strength={0.2}>
+              <div 
+                className="user-profile-menu cursor-pointer"
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+              >
+                <img 
+                  src={mockCurrentUser.avatarUrl} 
+                  alt={mockCurrentUser.firstName} 
+                  className="avatar-sm"
+                />
+              </div>
+            </Magnetic>
 
             {showProfileMenu && (
               <div className="popover-menu profile-menu">

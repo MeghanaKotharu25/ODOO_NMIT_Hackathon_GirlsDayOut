@@ -1,48 +1,101 @@
 import { useEffect, useState } from 'react';
+import { motion, useMotionValue, useSpring } from 'framer-motion';
 import './CustomCursor.css';
 
 export function CustomCursor() {
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isHovering, setIsHovering] = useState(false);
+  const [cursorVariant, setCursorVariant] = useState('default');
+  
+  // Motion values for the dot (snappy)
+  const cursorX = useMotionValue(-100);
+  const cursorY = useMotionValue(-100);
+  
+  // Springs for the outline (smooth follow)
+  const springConfig = { damping: 25, stiffness: 300, mass: 0.5 };
+  const cursorXSpring = useSpring(cursorX, springConfig);
+  const cursorYSpring = useSpring(cursorY, springConfig);
 
   useEffect(() => {
-    const updatePosition = (e) => {
-      setPosition({ x: e.clientX, y: e.clientY });
+    const moveCursor = (e) => {
+      cursorX.set(e.clientX - 4); // Center 8x8 dot
+      cursorY.set(e.clientY - 4);
     };
-    
+
     const handleMouseOver = (e) => {
-      if (
-        e.target.tagName.toLowerCase() === 'button' ||
-        e.target.tagName.toLowerCase() === 'a' ||
-        e.target.closest('button') ||
-        e.target.closest('a') ||
-        e.target.classList.contains('interactive')
+      const target = e.target;
+      if (target.closest('.roster-card')) {
+        setCursorVariant('view');
+      } else if (
+        target.tagName.toLowerCase() === 'button' ||
+        target.tagName.toLowerCase() === 'a' ||
+        target.closest('button') ||
+        target.closest('a')
       ) {
-        setIsHovering(true);
+        setCursorVariant('hover');
       } else {
-        setIsHovering(false);
+        setCursorVariant('default');
       }
     };
 
-    window.addEventListener('mousemove', updatePosition);
+    window.addEventListener('mousemove', moveCursor);
     window.addEventListener('mouseover', handleMouseOver);
 
     return () => {
-      window.removeEventListener('mousemove', updatePosition);
+      window.removeEventListener('mousemove', moveCursor);
       window.removeEventListener('mouseover', handleMouseOver);
     };
-  }, []);
+  }, [cursorX, cursorY]);
+
+  const variants = {
+    default: {
+      width: 40,
+      height: 40,
+      x: -16, // offset to center (40/2 - 4)
+      y: -16,
+      backgroundColor: 'transparent',
+      borderColor: 'var(--border-heavy)',
+      mixBlendMode: 'normal'
+    },
+    hover: {
+      width: 12,
+      height: 12,
+      x: -2,
+      y: -2,
+      backgroundColor: 'var(--text-primary)',
+      borderColor: 'transparent',
+      mixBlendMode: 'difference'
+    },
+    view: {
+      width: 64,
+      height: 64,
+      x: -28,
+      y: -28,
+      backgroundColor: 'var(--bg-main)',
+      borderColor: 'var(--text-primary)',
+      mixBlendMode: 'normal'
+    }
+  };
 
   return (
     <>
-      <div 
+      <motion.div
         className="cursor-dot"
-        style={{ left: `${position.x}px`, top: `${position.y}px` }}
+        style={{
+          translateX: cursorX,
+          translateY: cursorY,
+        }}
       />
-      <div 
-        className={`cursor-outline ${isHovering ? 'hover' : ''}`}
-        style={{ left: `${position.x}px`, top: `${position.y}px` }}
-      />
+      <motion.div
+        className="cursor-outline"
+        variants={variants}
+        animate={cursorVariant}
+        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+        style={{
+          translateX: cursorXSpring,
+          translateY: cursorYSpring,
+        }}
+      >
+        {cursorVariant === 'view' && <span className="cursor-text">VIEW</span>}
+      </motion.div>
     </>
   );
 }
