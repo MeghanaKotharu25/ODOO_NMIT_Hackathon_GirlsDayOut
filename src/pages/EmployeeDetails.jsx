@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Mail, Phone, MapPin, Briefcase, Calendar as CalendarIcon, Shield, FileText } from 'lucide-react';
 import { mockEmployees } from '../data/mockData';
+import { employeeService } from '../services/employeeService';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import './EmployeeDetails.css';
@@ -12,8 +13,19 @@ export function EmployeeDetails() {
   const { user } = useAuth();
   const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState('general');
+  const [employee, setEmployee] = useState(() => mockEmployees.find(emp => emp.id === id) || null);
 
-  const employee = mockEmployees.find(emp => emp.id === id);
+  useEffect(() => {
+    let isMounted = true;
+    if (id) {
+      employeeService.getEmployeeById(id).then(data => {
+        if (isMounted && data) {
+          setEmployee(data);
+        }
+      });
+    }
+    return () => { isMounted = false; };
+  }, [id]);
 
   if (!employee) {
     return (

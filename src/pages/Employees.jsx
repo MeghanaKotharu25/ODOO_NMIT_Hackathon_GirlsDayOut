@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Magnetic } from '../components/layout/Magnetic';
-import { useToast } from '../context/ToastContext';
 import { mockEmployees } from '../data/mockData';
+import { employeeService } from '../services/employeeService';
+import { useToast } from '../context/ToastContext';
 import { generateEmployeeId } from '../utils/idGenerator';
 import './Employees.css';
 
@@ -16,14 +17,35 @@ export function Employees() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDept, setFilterDept] = useState('All');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [dbError, setDbError] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    employeeService.getEmployees()
+      .then((data) => {
+        if (isMounted) {
+          if (data && data.length > 0) {
+            setEmployeesList(data);
+          }
+          setDbError(null);
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          console.warn('Employees database fetch error:', err.message);
+          setDbError(err.message);
+        }
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Form state for new employee
   const [newEmployee, setNewEmployee] = useState({
     firstName: '', lastName: '', position: '', department: ''
   });
 
-
-  
   const getStatusDisplay = (status) => {
     switch(status) {
       case 'Present': return <span className="status-dot present"></span>;
@@ -72,8 +94,6 @@ export function Employees() {
       role: 'EMPLOYEE'
     };
     
-    // Note: Simulated state update. A secure backend (Edge Function) is required 
-    // to call supabase.auth.admin.createUser without logging the current Admin out.
     setEmployeesList([empData, ...employeesList]);
     setIsDrawerOpen(false);
     setNewEmployee({ firstName: '', lastName: '', position: '', department: '' });
@@ -125,44 +145,50 @@ export function Employees() {
         </div>
       </header>
 
+      {dbError && (
+        <div className="mb-4 p-3 bg-amber-950/40 border border-amber-800/40 text-amber-300 text-xs font-mono rounded">
+          Notice: Supabase live query notice ({dbError}). Displaying personnel roster.
+        </div>
+      )}
+
       <div className="roster-grid">
-          {filteredEmployees.map((emp, index) => (
-            <motion.div 
-              key={emp.id} 
-              className="roster-card"
-              onClick={() => navigate(`/employees/${emp.id}`)}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
-              whileHover={{ y: -4, transition: { duration: 0.2, ease: "easeOut" } }}
-            >
-              <div className="roster-image-container">
-                <img src={emp.avatarUrl} alt={emp.firstName} className="roster-avatar" />
-                <div className="roster-status-overlay">
-                  {getStatusDisplay(emp.status)}
-                </div>
+        {filteredEmployees.map((emp, index) => (
+          <motion.div 
+            key={emp.id} 
+            className="roster-card"
+            onClick={() => navigate(`/employees/${emp.id}`)}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
+            whileHover={{ y: -4, transition: { duration: 0.2, ease: "easeOut" } }}
+          >
+            <div className="roster-image-container">
+              <img src={emp.avatarUrl} alt={emp.firstName} className="roster-avatar" />
+              <div className="roster-status-overlay">
+                {getStatusDisplay(emp.status)}
+              </div>
+            </div>
+            
+            <div className="roster-details">
+              <div className="roster-identity">
+                <span className="roster-id font-mono">{emp.id}</span>
+                <h3 className="roster-name">{emp.firstName} {emp.lastName}</h3>
               </div>
               
-              <div className="roster-details">
-                <div className="roster-identity">
-                  <span className="roster-id font-mono">{emp.id}</span>
-                  <h3 className="roster-name">{emp.firstName} {emp.lastName}</h3>
-                </div>
-                
-                <div className="roster-role">
-                  <p className="role-title">{emp.position}</p>
-                  <p className="role-dept font-mono">{emp.department}</p>
-                </div>
+              <div className="roster-role">
+                <p className="role-title">{emp.position}</p>
+                <p className="role-dept font-mono">{emp.department}</p>
               </div>
-            </motion.div>
-          ))}
-          {filteredEmployees.length === 0 && (
-            <div className="roster-empty">
-              <Search size={24} className="text-muted" />
-              <p className="font-mono text-muted">No records match the query.</p>
             </div>
-          )}
-        </div>
+          </motion.div>
+        ))}
+        {filteredEmployees.length === 0 && (
+          <div className="roster-empty">
+            <Search size={24} className="text-muted" />
+            <p className="font-mono text-muted">No records match the query.</p>
+          </div>
+        )}
+      </div>
 
       {/* Add Employee Drawer */}
       <div className={`drawer-overlay ${isDrawerOpen ? 'open' : ''}`} onClick={() => setIsDrawerOpen(false)}></div>
