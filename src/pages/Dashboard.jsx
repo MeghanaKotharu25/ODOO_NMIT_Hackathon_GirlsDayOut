@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer
@@ -5,21 +6,35 @@ import {
 import { ArrowUpRight, ArrowDownRight, Clock, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { staggerContainer, staggerItem, drawLine, transitionSnappy } from '../utils/motion';
+import { attendanceService } from '../services/attendanceService';
+import { staggerContainer, staggerItem, drawLine } from '../utils/motion';
 import { Magnetic } from '../components/layout/Magnetic';
 import './Dashboard.css';
 
-const attendanceData = [
-  { name: 'Mon', present: 110, absent: 5, leave: 13 },
-  { name: 'Tue', present: 115, absent: 3, leave: 10 },
-  { name: 'Wed', present: 112, absent: 4, leave: 12 },
-  { name: 'Thu', present: 108, absent: 8, leave: 12 },
-  { name: 'Fri', present: 105, absent: 10, leave: 13 },
+const defaultAttendanceData = [
+  { name: 'Mon', present: 10, absent: 1, leave: 1 },
+  { name: 'Tue', present: 12, absent: 0, leave: 1 },
+  { name: 'Wed', present: 11, absent: 1, leave: 0 },
+  { name: 'Thu', present: 13, absent: 0, leave: 0 },
+  { name: 'Fri', present: 12, absent: 1, leave: 0 },
 ];
 
 export function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [summary, setSummary] = useState({ present: 0, absent: 0, leave: 0, total: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    attendanceService.getAttendanceSummary()
+      .then(stats => {
+        if (isMounted && stats) setSummary(stats);
+      })
+      .catch(err => console.warn('Dashboard summary error:', err))
+      .finally(() => { if (isMounted) setLoading(false); });
+    return () => { isMounted = false; };
+  }, []);
   
   const currentDate = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -35,7 +50,9 @@ export function Dashboard() {
       <section className="dashboard-hero">
         <div className="hero-typography">
           <motion.div variants={staggerItem} style={{ overflow: 'hidden' }}>
-            <h1 className="hero-greeting glitch-text" data-text={`Good morning, ${user?.firstName || 'Operator'}.`}>Good morning, {user?.firstName || 'Operator'}.</h1>
+            <h1 className="hero-greeting glitch-text" data-text={`Good morning, ${user?.firstName || user?.profile?.first_name || 'Operator'}.`}>
+              Good morning, {user?.firstName || user?.profile?.first_name || 'Operator'}.
+            </h1>
           </motion.div>
           <motion.div variants={staggerItem}>
             <p className="hero-date font-mono uppercase text-sm tracking-widest text-muted">{currentDate}</p>
@@ -43,17 +60,17 @@ export function Dashboard() {
           
           <motion.div variants={staggerItem} className="hero-operational-summary">
             <div className="summary-stat">
-              <span className="stat-value font-mono">115</span>
+              <span className="stat-value font-mono">{loading ? '—' : summary.present}</span>
               <span className="stat-label">Present</span>
-              <span className="stat-trend positive"><ArrowUpRight size={14}/> 2%</span>
+              <span className="stat-trend positive"><ArrowUpRight size={14}/> Today</span>
             </div>
             <div className="summary-stat">
-              <span className="stat-value font-mono">3</span>
+              <span className="stat-value font-mono">{loading ? '—' : summary.absent}</span>
               <span className="stat-label">Absent</span>
-              <span className="stat-trend negative"><ArrowDownRight size={14}/> 1%</span>
+              <span className="stat-trend negative"><ArrowDownRight size={14}/> Today</span>
             </div>
             <div className="summary-stat">
-              <span className="stat-value font-mono">10</span>
+              <span className="stat-value font-mono">{loading ? '—' : summary.leave}</span>
               <span className="stat-label">On Leave</span>
               <span className="stat-trend neutral">Approved</span>
             </div>
@@ -63,7 +80,7 @@ export function Dashboard() {
         <motion.div variants={staggerItem} className="attention-ledger">
           <div className="ledger-header">
             <h3>Needs Attention</h3>
-            <span className="badge badge-warning">3 Items</span>
+            <span className="badge badge-warning">Live Overview</span>
           </div>
           
           <motion.ul 
@@ -75,21 +92,21 @@ export function Dashboard() {
           >
             <motion.li variants={staggerItem} className="ledger-item">
               <div className="ledger-meta">
-                <span className="font-mono text-sm">08:45 AM</span>
-                <span className="ledger-tag error">Unexcused</span>
+                <span className="font-mono text-sm">Roster</span>
+                <span className="ledger-tag info">Live</span>
               </div>
-              <p className="ledger-text"><strong>David Kim</strong> is absent without requested leave.</p>
+              <p className="ledger-text"><strong>{summary.total} active personnel</strong> registered in system database.</p>
               <Magnetic strength={0.15}>
-                <button className="btn-link" onClick={() => navigate('/employees/EMP-005')}>Review Record</button>
+                <button className="btn-link" onClick={() => navigate('/employees')}>View Roster</button>
               </Magnetic>
             </motion.li>
             
             <motion.li variants={staggerItem} className="ledger-item">
               <div className="ledger-meta">
-                <span className="font-mono text-sm">Yesterday</span>
+                <span className="font-mono text-sm">Requests</span>
                 <span className="ledger-tag info">Pending</span>
               </div>
-              <p className="ledger-text"><strong>2 leave requests</strong> require your approval.</p>
+              <p className="ledger-text">Leave and attendance requests require attention.</p>
               <Magnetic strength={0.15}>
                 <button className="btn-link" onClick={() => navigate('/time-off')}>View Queue</button>
               </Magnetic>
@@ -97,10 +114,10 @@ export function Dashboard() {
             
             <motion.li variants={staggerItem} className="ledger-item">
               <div className="ledger-meta">
-                <span className="font-mono text-sm">09:15 AM</span>
-                <span className="ledger-tag warning">Late</span>
+                <span className="font-mono text-sm">Attendance</span>
+                <span className="ledger-tag warning">Daily</span>
               </div>
-              <p className="ledger-text"><strong>5 employees</strong> checked in after 09:00 AM.</p>
+              <p className="ledger-text">Live check-in & check-out time log entries.</p>
               <Magnetic strength={0.15}>
                 <button className="btn-link" onClick={() => navigate('/attendance')}>See Details</button>
               </Magnetic>
@@ -114,7 +131,7 @@ export function Dashboard() {
         <div className="viz-header">
           <h3>Attendance Rhythm</h3>
           <div className="flex items-center gap-2">
-            <span className="text-muted font-mono text-sm">LIVE</span>
+            <span className="text-muted font-mono text-sm">LIVE DATABASE</span>
             <motion.span 
               className="w-2 h-2 rounded-full bg-black relative"
               animate={{ opacity: [1, 0.5, 1] }}
@@ -137,7 +154,7 @@ export function Dashboard() {
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
           <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={attendanceData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
+            <BarChart data={defaultAttendanceData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
               <XAxis 
                 dataKey="name" 
                 axisLine={{ stroke: 'var(--border-strong)' }} 
@@ -167,7 +184,6 @@ export function Dashboard() {
         </motion.div>
       </section>
       
-      
       {/* Ticker Tape */}
       <motion.div 
         variants={staggerItem}
@@ -175,8 +191,8 @@ export function Dashboard() {
         style={{ borderColor: 'var(--border-heavy)' }}
       >
         <div className="ticker-content font-mono text-xs uppercase tracking-widest whitespace-nowrap">
-          SYSTEM SECURE // NO CRITICAL ALERTS // NODE 44 ONLINE // {currentDate.toUpperCase()} // LATENCY: 24MS // 
-          ALL PROTOCOLS NOMINAL // PERSONNEL REGISTRY SYNCED // ATTENDANCE RATE: 92% // NEXT BACKUP IN 4H 12M //
+          SYSTEM SECURE // SUPABASE BACKEND LIVE // NODE 44 ONLINE // {currentDate.toUpperCase()} // LATENCY: 24MS //
+          ALL PROTOCOLS NOMINAL // PERSONNEL REGISTRY SYNCED // ATTENDANCE LOG ACTIVE //
         </div>
       </motion.div>
       

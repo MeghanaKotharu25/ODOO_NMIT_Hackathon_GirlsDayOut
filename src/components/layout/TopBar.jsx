@@ -72,12 +72,12 @@ export function TopBar() {
             {showProfileMenu && (
               <div className="popover-menu profile-menu" style={{ top: '120%' }}>
                 <div className="popover-header profile-header">
-                  <span className="font-mono">{user?.firstName || user?.profile?.first_name || 'Admin'} {user?.lastName || user?.profile?.last_name || ''}</span>
+                  <span className="font-mono">{user?.firstName || user?.first_name || user?.profile?.first_name || 'User'} {user?.lastName || user?.last_name || user?.profile?.last_name || ''}</span>
                   <span className="text-muted text-xs uppercase">{user?.role || user?.profile?.role || 'EMPLOYEE'}</span>
                 </div>
                 <button 
                   className="popover-action"
-                  onClick={() => { setShowProfileMenu(false); navigate(`/employees/${user?.id || ''}`); }}
+                  onClick={() => { setShowProfileMenu(false); navigate(`/employees/${user?.id || user?.uuid || ''}`); }}
                 >
                   <UserCircle size={14} /> My Dossier
                 </button>

@@ -28,7 +28,12 @@ export function Login() {
       navigate('/loading');
     } catch (err) {
       console.error('Login error:', err);
-      addToast(err.message || 'Authentication failed.', 'error');
+      const msg = err.message || '';
+      if (msg.toLowerCase().includes('failed to fetch') || err.name === 'TypeError') {
+        addToast(`Network Error: Unable to connect to Supabase (${msg || 'Failed to fetch'}). Check DNS/Internet.`, 'error');
+      } else {
+        addToast(msg || 'Authentication failed.', 'error');
+      }
       setIsSubmitting(false);
     }
   };

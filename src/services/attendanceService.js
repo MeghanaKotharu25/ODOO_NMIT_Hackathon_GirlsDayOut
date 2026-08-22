@@ -1,6 +1,92 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 export const attendanceService = {
+  // Fetch attendance records from Supabase joined with profiles
+  getAttendance: async (employeeUuid = null) => {
+    if (!isSupabaseConfigured) return [];
+
+    let query = supabase
+      .from('attendance')
+      .select(`
+        id,
+        employee_id,
+        date,
+        check_in,
+        check_out,
+        status,
+        work_hours,
+        profiles (
+          employee_code,
+          first_name,
+          last_name,
+          department,
+          avatar_url
+        )
+      `)
+      .order('date', { ascending: false });
+
+    if (employeeUuid) {
+      query = query.eq('employee_id', employeeUuid);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Supabase getAttendance error:', error);
+      throw new Error(`Database Error: ${error.message || 'Failed to fetch attendance'}`);
+    }
+
+    if (!data) return [];
+
+    return data.map(record => {
+      let displayStatus = 'Present';
+      const s = (record.status || '').toLowerCase();
+      if (s === 'absent') displayStatus = 'Absent';
+      else if (s === 'leave' || s === 'on leave') displayStatus = 'On Leave';
+      else if (s === 'half_day' || s === 'half-day') displayStatus = 'Half-day';
+
+      const checkInFormatted = record.check_in
+        ? new Date(record.check_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : '--';
+
+      const checkOutFormatted = record.check_out
+        ? new Date(record.check_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : '--';
+
+      let durationFormatted = '--';
+      if (record.work_hours) {
+        const hrs = Math.floor(record.work_hours);
+        const mins = Math.round((record.work_hours - hrs) * 60);
+        durationFormatted = `${hrs}h ${String(mins).padStart(2, '0')}m`;
+      } else if (record.check_in && record.check_out) {
+        const diffMs = new Date(record.check_out) - new Date(record.check_in);
+        const totalMins = Math.max(0, Math.floor(diffMs / 60000));
+        durationFormatted = `${Math.floor(totalMins / 60)}h ${String(totalMins % 60).padStart(2, '0')}m`;
+      }
+
+      const profile = record.profiles || {};
+      const employeeName = profile.first_name ? `${profile.first_name} ${profile.last_name || ''}` : 'Employee';
+
+      return {
+        id: record.id,
+        employeeId: record.employee_id,
+        employeeCode: profile.employee_code || 'EMP',
+        employeeName,
+        department: profile.department || 'General',
+        avatarUrl: profile.avatar_url,
+        date: record.date,
+        checkIn: checkInFormatted,
+        checkOut: checkOutFormatted,
+        rawCheckIn: record.check_in,
+        rawCheckOut: record.check_out,
+        status: displayStatus,
+        rawStatus: record.status,
+        hours: durationFormatted,
+        workHours: record.work_hours
+      };
+    });
+  },
+
   // Get today's attendance record for a specific employee
   getTodayRecord: async (employeeId) => {
     if (!isSupabaseConfigured) return null;
@@ -18,7 +104,7 @@ export const attendanceService = {
     return data;
   },
 
-  // Get attendance history for an employee (last N days)
+  // Get attendance history for an employee
   getHistory: async (employeeId, limit = 30) => {
     if (!isSupabaseConfigured) return [];
     const { data, error } = await supabase
@@ -55,33 +141,59 @@ export const attendanceService = {
     return data || [];
   },
 
-  // Check in
-  checkIn: async (employeeId) => {
+  // Check in for an employee
+  checkIn: async (employeeUuid) => {
     if (!isSupabaseConfigured) throw new Error('Supabase not configured');
-    const { data, error } = await supabase.from('attendance').insert({
-      employee_id: employeeId,
-      date: new Date().toISOString().split('T')[0],
-      check_in: new Date().toISOString(),
-      status: 'present',
-    }).select().single();
-    if (error) throw error;
+    const today = new Date().toISOString().split('T')[0];
+    const now = new Date().toISOString();
+
+    const { data, error } = await supabase
+      .from('attendance')
+      .upsert({
+        employee_id: employeeUuid,
+        date: today,
+        check_in: now,
+        status: 'present'
+      }, { onConflict: 'employee_id,date' })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase checkIn error:', error);
+      throw new Error(`Check-in failed: ${error.message}`);
+    }
     return data;
   },
 
-  // Check out
-  checkOut: async (employeeId) => {
+  // Check out for an employee
+  checkOut: async (employeeUuid, checkInIsoTime) => {
     if (!isSupabaseConfigured) throw new Error('Supabase not configured');
     const today = new Date().toISOString().split('T')[0];
-    const checkOutTime = new Date().toISOString();
+    const now = new Date();
+    const checkOutIso = now.toISOString();
+
+    let workHours = 8.0;
+    if (checkInIsoTime) {
+      const diffMs = now - new Date(checkInIsoTime);
+      workHours = Number((diffMs / (1000 * 60 * 60)).toFixed(2));
+    }
+
     const { data, error } = await supabase
       .from('attendance')
-      .update({ check_out: checkOutTime })
-      .eq('employee_id', employeeId)
-      .eq('date', today)
-      .is('check_out', null)
+      .upsert({
+        employee_id: employeeUuid,
+        date: today,
+        check_out: checkOutIso,
+        work_hours: workHours,
+        status: 'present'
+      }, { onConflict: 'employee_id,date' })
       .select()
       .single();
-    if (error) throw error;
+
+    if (error) {
+      console.error('Supabase checkOut error:', error);
+      throw new Error(`Check-out failed: ${error.message}`);
+    }
     return data;
   },
 
@@ -90,7 +202,7 @@ export const attendanceService = {
     if (!isSupabaseConfigured) return { present: 0, absent: 0, leave: 0, total: 0 };
     const today = new Date().toISOString().split('T')[0];
 
-    const { data: totalProfiles } = await supabase
+    const { count: totalProfiles } = await supabase
       .from('profiles')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'active');
@@ -100,7 +212,7 @@ export const attendanceService = {
       .select('status')
       .eq('date', today);
 
-    const total = totalProfiles?.length ?? 0;
+    const total = totalProfiles ?? 0;
     let present = 0, absent = 0, leave = 0;
     if (attendanceToday) {
       attendanceToday.forEach(a => {
@@ -110,5 +222,5 @@ export const attendanceService = {
       });
     }
     return { present, absent, leave, total };
-  },
+  }
 };
