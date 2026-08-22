@@ -12,7 +12,8 @@ export function TopBar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { addToast } = useToast();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const isAdmin = (user?.profile?.role || user?.role || '').toLowerCase() === 'admin';
   
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -36,7 +37,7 @@ export function TopBar() {
   const mainNav = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Employees', path: '/employees', icon: Users },
-    { name: 'Attendance', path: '/attendance', icon: Clock },
+    { name: 'Attendance', path: isAdmin ? '/admin/attendance' : '/attendance', icon: Clock },
     { name: 'Time Off', path: '/time-off', icon: Calendar },
     { name: 'Payroll', path: '/salary', icon: DollarSign },
   ];
