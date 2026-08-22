@@ -177,13 +177,16 @@ export const attendanceService = {
     if (profilesError) throw profilesError;
     if (attendanceError) throw attendanceError;
 
+    const today = attendanceService.getLocalDate();
+    const isFuture = date > today;
+
     const attendanceByEmployee = new Map((attendance || []).map((record) => [record.employee_id, record]));
     return (profiles || []).map((profile) => {
       const record = attendanceByEmployee.get(profile.id);
       return {
         profile,
         record,
-        status: record?.status || 'absent',
+        status: record?.status || (isFuture ? 'scheduled' : 'absent'),
         checkIn: record?.check_in || '',
         checkOut: record?.check_out || '',
         workHours: record?.work_hours || 0,

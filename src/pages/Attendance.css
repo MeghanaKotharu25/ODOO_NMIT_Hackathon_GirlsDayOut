@@ -208,7 +208,7 @@
 .status-badge.late { color: var(--status-warning); background: var(--status-warning-bg); }
 .status-badge.absent { color: var(--status-error); background: var(--status-error-bg); }
 .status-badge.halfday { color: var(--status-info); background: var(--status-info-bg); }
-.status-badge.not-checked-in { color: var(--text-secondary); background: var(--bg-subtle); }
+.status-badge.not-checked-in, .status-badge.scheduled { color: var(--text-secondary); background: var(--bg-subtle); }
 
 /* Section Divider */
 .section-divider {
