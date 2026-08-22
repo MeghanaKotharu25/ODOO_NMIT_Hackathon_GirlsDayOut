@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react';
-import { AlertCircle, CalendarDays, Save } from 'lucide-react';
+import { AlertCircle, CalendarDays } from 'lucide-react';
 import { attendanceService } from '../../../services/attendanceService';
 import './Attendance.css';
 
-const statuses = ['present', 'absent', 'half_day', 'leave'];
-
-const toInputTime = (value) => value ? new Date(value).toTimeString().slice(0, 5) : '';
 
 const formatTime = (value) => value
   ? new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -14,9 +11,7 @@ const formatTime = (value) => value
 export default function Attendance() {
   const [selectedDate, setSelectedDate] = useState(attendanceService.getLocalDate());
   const [records, setRecords] = useState([]);
-  const [drafts, setDrafts] = useState({});
   const [loading, setLoading] = useState(false);
-  const [savingId, setSavingId] = useState(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -28,38 +23,13 @@ export default function Attendance() {
     setError('');
     try {
       const rows = await attendanceService.getAdminAttendance(selectedDate);
-
       setRecords(rows);
-      setDrafts(Object.fromEntries(rows.map((row) => [row.profile.id, {
-        status: row.status,
-        checkIn: toInputTime(row.checkIn),
-        checkOut: toInputTime(row.checkOut),
-      }])));
     } catch (loadError) {
       console.error('Unable to load admin attendance:', loadError);
       setError(loadError.message || 'Unable to load attendance records.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const updateDraft = (employeeId, field, value) => {
-    setDrafts((current) => ({
-      ...current,
-      [employeeId]: { ...current[employeeId], [field]: value },
-    }));
-  };
-
-  const saveRecord = async (row) => {
-    const draft = drafts[row.profile.id];
-    setSavingId(row.profile.id);
-    setError('');
-
-    const result = await attendanceService.saveAdminRecord(row, selectedDate, draft);
-
-    if (result.error) setError(result.error.message);
-    else await loadAttendance();
-    setSavingId(null);
   };
 
   return (
@@ -140,27 +110,9 @@ export default function Attendance() {
                       {extraHours > 0 ? `+${Math.floor(extraHours)}h ${Math.round((extraHours % 1) * 60).toString().padStart(2, '0')}m` : '--'}
                     </td>
                     <td>
-                      <select
-                        className={`admin-status-select ${drafts[row.profile.id]?.status}`}
-                        value={drafts[row.profile.id]?.status || row.status}
-                        disabled={savingId === row.profile.id}
-                        onChange={async (event) => {
-                          const newStatus = event.target.value;
-                          updateDraft(row.profile.id, 'status', newStatus);
-                          
-                          // Auto-save when status changes
-                          setSavingId(row.profile.id);
-                          setError('');
-                          const draftToSave = { ...drafts[row.profile.id], status: newStatus };
-                          const result = await attendanceService.saveAdminRecord(row, selectedDate, draftToSave);
-                          if (result.error) setError(result.error.message);
-                          else await loadAttendance();
-                          setSavingId(null);
-                        }}
-                      >
-                        {statuses.map((status) => <option key={status} value={status}>{status.replace('_', '-')}</option>)}
-                      </select>
-                      {savingId === row.profile.id && <span style={{fontSize: '0.75rem', marginLeft: '8px', color: 'var(--text-muted)'}}>Saving...</span>}
+                      <span className={`status-badge ${row.status.replace('_', '').toLowerCase()}`}>
+                        {row.status.replace('_', '-')}
+                      </span>
                     </td>
                   </tr>
                 );
