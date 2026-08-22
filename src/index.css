@@ -135,41 +135,24 @@ h4 {
 /* App Layout */
 .app-layout {
   display: flex;
+  flex-direction: column;
   height: 100vh;
   overflow: hidden;
 }
 
-.sidebar {
-  width: var(--sidebar-width);
-  background-color: var(--bg-main);
-  border-right: 1px solid var(--border-light);
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  padding: var(--spacing-6) 0;
-}
 
 .main-content-wrapper {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
-}
-
-.topbar {
-  height: var(--topbar-height);
-  background-color: var(--bg-main);
-  border-bottom: 1px solid var(--border-light);
-  display: flex;
-  align-items: center;
-  padding: 0 var(--spacing-8);
-  flex-shrink: 0;
+  overflow: hidden;
 }
 
 .main-content {
   flex: 1;
   overflow-y: auto;
-  padding: var(--spacing-10) var(--spacing-12);
+  padding: var(--spacing-10) var(--spacing-8);
   background-color: var(--bg-main);
 }
 
