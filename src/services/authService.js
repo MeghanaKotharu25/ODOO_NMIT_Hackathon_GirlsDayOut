@@ -4,14 +4,36 @@ export const authService = {
   // Sign up a new user with email & password and optional user metadata
   signUp: async (email, password, metadata = {}) => {
     if (!isSupabaseConfigured) throw new Error('Demo mode: Supabase not configured');
+    const cleanEmail = (email || '').trim().toLowerCase();
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: cleanEmail,
       password,
       options: {
         data: metadata,
       },
     });
     if (error) throw error;
+
+    // Ensure profile row exists in public.profiles for this new user
+    if (data?.user) {
+      try {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: data.user.id,
+            email: cleanEmail,
+            first_name: metadata.first_name || 'Admin',
+            last_name: metadata.last_name || '',
+            role: metadata.role || 'admin',
+            phone: metadata.phone || null,
+            status: 'active',
+          }, { onConflict: 'id' });
+        if (profileError) console.warn('Profile upsert warning:', profileError);
+      } catch (pErr) {
+        console.warn('Profile sync exception:', pErr);
+      }
+    }
+
     return data;
   },
 
@@ -19,23 +41,28 @@ export const authService = {
   signIn: async (identifier, password) => {
     if (!isSupabaseConfigured) throw new Error('Demo mode: Supabase not configured');
 
-    let targetEmail = identifier?.trim() || '';
+    const cleanInput = (identifier || '').trim();
+    if (!cleanInput) throw new Error('Email or Login ID is required.');
+
+    let targetEmail = cleanInput;
 
     // If identifier is not an email (e.g. employee code like OIJODO20260001 or EMP-001), resolve email from profiles
-    if (!targetEmail.includes('@')) {
+    if (!cleanInput.includes('@')) {
       try {
         const { data: profile } = await supabase
           .from('profiles')
           .select('email')
-          .ilike('employee_code', targetEmail)
+          .ilike('employee_code', cleanInput)
           .maybeSingle();
 
         if (profile?.email) {
-          targetEmail = profile.email;
+          targetEmail = profile.email.trim().toLowerCase();
         }
       } catch (lookupErr) {
         console.warn('Employee code lookup warning:', lookupErr);
       }
+    } else {
+      targetEmail = cleanInput.toLowerCase();
     }
 
     const { data, error } = await supabase.auth.signInWithPassword({
