@@ -32,6 +32,14 @@
   gap: var(--spacing-2);
 }
 
+.eyebrow,
+.summary-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
 .page-title {
   font-family: var(--font-serif);
   font-size: 2rem;
@@ -86,6 +94,23 @@
   color: var(--status-success);
 }
 
+.clock-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--spacing-2);
+}
+
+.live-clock {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.attendance-actions {
+  display: flex;
+  gap: var(--spacing-2);
+}
+
 /* Action Button */
 .btn-action {
   display: inline-flex;
@@ -127,6 +152,51 @@
   background-color: var(--status-error);
   color: white;
 }
+
+.btn-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.attendance-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-4);
+}
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  min-height: 112px;
+  justify-content: center;
+  padding: var(--spacing-5);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+}
+
+.summary-card strong {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid currentColor;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.status-badge.present { color: var(--status-success); background: var(--status-success-bg); }
+.status-badge.late { color: var(--status-warning); background: var(--status-warning-bg); }
+.status-badge.absent { color: var(--status-error); background: var(--status-error-bg); }
+.status-badge.halfday { color: var(--status-info); background: var(--status-info-bg); }
+.status-badge.not-checked-in { color: var(--text-secondary); background: var(--bg-subtle); }
 
 /* Section Divider */
 .section-divider {
@@ -187,4 +257,24 @@
 
 .text-right {
   text-align: right;
+}
+
+@media (max-width: 640px) {
+  .attendance-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .clock-panel {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .attendance-actions,
+  .btn-action {
+    width: 100%;
+  }
+
+  .attendance-actions .btn-action {
+    flex: 1;
+  }
 }
