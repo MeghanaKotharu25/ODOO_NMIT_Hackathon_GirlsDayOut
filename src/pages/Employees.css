@@ -1,163 +1,204 @@
-.employees-page {
+.roster-page {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-6);
+  gap: var(--spacing-8);
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-.page-header {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-5);
-  margin-bottom: var(--spacing-2);
-}
-
-.header-content {
+.roster-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
+  border-bottom: 2px solid var(--border-heavy);
+  padding-bottom: var(--spacing-6);
 }
 
-.page-title {
-  margin: 0 0 var(--spacing-1) 0;
+@media (max-width: 768px) {
+  .roster-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-4);
+  }
 }
 
-.filters-bar {
+.roster-title-section {
   display: flex;
-  gap: var(--spacing-3);
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.roster-meta {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+}
+
+.roster-controls {
+  display: flex;
+  gap: var(--spacing-4);
   align-items: center;
 }
 
-.search-container.expanded {
-  flex: 1;
-  max-width: 400px;
+.search-bar {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border-strong);
+  padding: var(--spacing-2) var(--spacing-3);
+  background-color: var(--bg-surface);
+  min-width: 280px;
+  transition: border-color 0.2s var(--ease-snappy);
 }
 
-.search-container.expanded .search-input {
+.search-bar:focus-within {
+  border-color: var(--border-heavy);
+}
+
+.search-icon {
+  color: var(--text-muted);
+  margin-right: var(--spacing-2);
+}
+
+.search-input {
+  border: none;
+  outline: none;
+  background: transparent;
   width: 100%;
+  font-size: 0.85rem;
+  color: var(--text-primary);
 }
 
-.filter-btn {
-  color: var(--text-secondary);
+.search-input::placeholder {
+  color: var(--text-muted);
 }
 
-.employee-grid {
+/* Roster Grid */
+.roster-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--spacing-5);
+  gap: var(--spacing-8);
+  padding-top: var(--spacing-4);
 }
 
-.employee-card {
+/* Editorial Roster Card */
+.roster-card {
+  display: flex;
+  flex-direction: column;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  display: flex;
-  flex-direction: column;
+  border: 1px solid transparent;
+  padding-bottom: var(--spacing-4);
+  transition: border-color 0.3s var(--ease-snappy);
 }
 
-.employee-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--border-strong);
+.roster-card:hover {
+  border-bottom-color: var(--border-heavy);
 }
 
-.card-header {
-  padding: var(--spacing-4) var(--spacing-4) 0;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.status-indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.status-indicator .dot {
-  width: 8px;
-  height: 8px;
-  border-radius: var(--radius-full);
-}
-
-.status-indicator.present .dot { background-color: var(--status-success); }
-.status-indicator.absent .dot { background-color: var(--status-error); }
-.status-indicator.leave { color: var(--status-info); }
-
-.card-body {
-  padding: 0 var(--spacing-4) var(--spacing-5);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.employee-avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: var(--radius-full);
-  object-fit: cover;
-  margin-bottom: var(--spacing-3);
-  border: 2px solid var(--bg-surface);
-  box-shadow: var(--shadow-sm);
-}
-
-.employee-name {
-  margin: 0 0 var(--spacing-1) 0;
-  font-size: 1.125rem;
-}
-
-.employee-position {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
+.roster-image-container {
+  width: 100%;
+  aspect-ratio: 4/5;
+  overflow: hidden;
+  position: relative;
+  background-color: var(--bg-subtle);
   margin-bottom: var(--spacing-4);
 }
 
-.employee-meta {
+.roster-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(20%);
+  transition: transform 0.5s var(--ease-fluid), filter 0.5s var(--ease-fluid);
+}
+
+.roster-card:hover .roster-avatar {
+  transform: scale(1.05);
+  filter: grayscale(0%);
+}
+
+.roster-status-overlay {
+  position: absolute;
+  bottom: var(--spacing-3);
+  right: var(--spacing-3);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  background-color: var(--bg-surface);
+  border-radius: 50%;
+  padding: 2px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+}
+
+.status-dot {
   width: 100%;
-  padding-top: var(--spacing-4);
-  border-top: 1px solid var(--border-light);
+  height: 100%;
+  border-radius: 50%;
+  transition: transform 0.3s var(--ease-snappy);
 }
 
-.employee-meta .badge {
-  background-color: var(--bg-subtle);
-  color: var(--text-secondary);
-  font-weight: 500;
+.roster-card:hover .status-dot {
+  transform: scale(1.2);
 }
 
-.employee-id {
-  font-size: 0.75rem;
+.status-dot.present { background-color: var(--status-success); }
+.status-dot.absent { background-color: var(--status-error); }
+.status-dot.leave { background-color: var(--status-info); }
+
+.roster-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.roster-identity {
+  display: flex;
+  flex-direction: column;
+}
+
+.roster-id {
+  font-size: 0.65rem;
   color: var(--text-muted);
-  font-family: monospace;
+  margin-bottom: 2px;
 }
 
-.empty-state {
+.roster-name {
+  font-family: var(--font-sans);
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.roster-role {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-top: 1px solid var(--border-light);
+  padding-top: var(--spacing-2);
+}
+
+.role-title {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.role-dept {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  background: var(--bg-subtle);
+  padding: 2px 6px;
+}
+
+.roster-empty {
   grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--spacing-12);
-  text-align: center;
-  background-color: var(--bg-surface);
+  padding: var(--spacing-16);
+  gap: var(--spacing-4);
   border: 1px dashed var(--border-strong);
-  border-radius: var(--radius-md);
-}
-
-.empty-icon-placeholder {
-  width: 64px;
-  height: 64px;
-  border-radius: var(--radius-full);
-  background-color: var(--bg-subtle);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: var(--spacing-4);
-}
-
-.empty-state h3 {
-  margin: 0 0 var(--spacing-2) 0;
 }

@@ -1,9 +1,7 @@
-import { useState } from 'react';
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  LineChart, Line
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer
 } from 'recharts';
-import { Users, UserX, Clock, CalendarDays, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Clock, AlertTriangle } from 'lucide-react';
 import './Dashboard.css';
 
 const attendanceData = [
@@ -16,166 +14,110 @@ const attendanceData = [
 
 export function Dashboard() {
   return (
-    <div className="dashboard">
-      <header className="dashboard-header">
-        <div>
-          <h1 className="dashboard-title">Good morning, Elena</h1>
-          <p className="text-muted">Here's what's happening today, October 24.</p>
-        </div>
-      </header>
-
-      <div className="dashboard-grid">
-        <div className="dashboard-main">
-          {/* Key Metrics */}
-          <div className="metrics-grid">
-            <div className="card metric-card">
-              <div className="metric-icon-wrapper success">
-                <Users size={20} />
-              </div>
-              <div className="metric-info">
-                <span className="metric-label">Present Today</span>
-                <div className="metric-value-row">
-                  <span className="metric-value">115</span>
-                  <span className="metric-trend positive">
-                    <ArrowUpRight size={14} /> 2%
-                  </span>
-                </div>
-              </div>
+    <div className="dashboard-editorial">
+      
+      {/* Top Editorial Section */}
+      <section className="dashboard-hero">
+        <div className="hero-typography">
+          <h1 className="hero-greeting">Good morning, Elena.</h1>
+          <p className="hero-date font-mono">Thursday, October 24, 2024</p>
+          
+          <div className="hero-operational-summary">
+            <div className="summary-stat">
+              <span className="stat-value font-mono">115</span>
+              <span className="stat-label">Present</span>
+              <span className="stat-trend positive"><ArrowUpRight size={14}/> 2%</span>
             </div>
+            <div className="summary-stat">
+              <span className="stat-value font-mono">3</span>
+              <span className="stat-label">Absent</span>
+              <span className="stat-trend negative"><ArrowDownRight size={14}/> 1%</span>
+            </div>
+            <div className="summary-stat">
+              <span className="stat-value font-mono">10</span>
+              <span className="stat-label">On Leave</span>
+              <span className="stat-trend neutral">Approved</span>
+            </div>
+          </div>
+        </div>
+
+        {/* The Ledger: Needs Attention */}
+        <div className="attention-ledger">
+          <div className="ledger-header">
+            <h3>Needs Attention</h3>
+            <span className="badge badge-warning">3 Items</span>
+          </div>
+          
+          <ul className="ledger-list">
+            <li className="ledger-item">
+              <div className="ledger-meta">
+                <span className="font-mono text-sm">08:45 AM</span>
+                <span className="ledger-tag error">Unexcused</span>
+              </div>
+              <p className="ledger-text"><strong>David Kim</strong> is absent without requested leave.</p>
+              <button className="btn-link">Review Record</button>
+            </li>
             
-            <div className="card metric-card">
-              <div className="metric-icon-wrapper warning">
-                <UserX size={20} />
+            <li className="ledger-item">
+              <div className="ledger-meta">
+                <span className="font-mono text-sm">Yesterday</span>
+                <span className="ledger-tag info">Pending</span>
               </div>
-              <div className="metric-info">
-                <span className="metric-label">Absent</span>
-                <div className="metric-value-row">
-                  <span className="metric-value">3</span>
-                  <span className="metric-trend negative">
-                    <ArrowDownRight size={14} /> 1%
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="card metric-card">
-              <div className="metric-icon-wrapper info">
-                <CalendarDays size={20} />
-              </div>
-              <div className="metric-info">
-                <span className="metric-label">On Leave</span>
-                <div className="metric-value-row">
-                  <span className="metric-value">10</span>
-                  <span className="text-muted text-sm ml-2">Approved</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Chart Section */}
-          <div className="card chart-card">
-            <div className="chart-header">
-              <h3>Attendance Trend</h3>
-              <select className="chart-select">
-                <option>This Week</option>
-                <option>Last Week</option>
-              </select>
-            </div>
-            <div className="chart-container">
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={attendanceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E4E4E7" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#A1A1AA', fontSize: 12 }} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#A1A1AA', fontSize: 12 }} />
-                  <Tooltip 
-                    cursor={{fill: '#F4F4F5'}}
-                    contentStyle={{ borderRadius: '8px', border: '1px solid #E4E4E7', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}
-                  />
-                  <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px', fontSize: '12px' }} />
-                  <Bar dataKey="present" name="Present" fill="#10B981" radius={[4, 4, 0, 0]} barSize={32} />
-                  <Bar dataKey="absent" name="Absent" fill="#F59E0B" radius={[4, 4, 0, 0]} barSize={32} />
-                  <Bar dataKey="leave" name="On Leave" fill="#3B82F6" radius={[4, 4, 0, 0]} barSize={32} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-
-        <div className="dashboard-sidebar">
-          {/* Needs Attention */}
-          <div className="card attention-card">
-            <div className="attention-header">
-              <h3>Needs Attention</h3>
-              <span className="badge badge-warning">3</span>
-            </div>
+              <p className="ledger-text"><strong>2 leave requests</strong> require your approval.</p>
+              <button className="btn-link">View Queue</button>
+            </li>
             
-            <div className="attention-list">
-              <div className="attention-item">
-                <div className="attention-icon error">
-                  <UserX size={16} />
-                </div>
-                <div className="attention-content">
-                  <p className="attention-title">David Kim absent</p>
-                  <p className="attention-desc">No leave requested</p>
-                </div>
-                <button className="btn btn-secondary btn-sm">Review</button>
+            <li className="ledger-item">
+              <div className="ledger-meta">
+                <span className="font-mono text-sm">09:15 AM</span>
+                <span className="ledger-tag warning">Late</span>
               </div>
-              
-              <div className="attention-item">
-                <div className="attention-icon info">
-                  <CalendarDays size={16} />
-                </div>
-                <div className="attention-content">
-                  <p className="attention-title">2 Pending leaves</p>
-                  <p className="attention-desc">Requires approval</p>
-                </div>
-                <button className="btn btn-secondary btn-sm">View</button>
-              </div>
-
-              <div className="attention-item">
-                <div className="attention-icon warning">
-                  <Clock size={16} />
-                </div>
-                <div className="attention-content">
-                  <p className="attention-title">Late check-ins</p>
-                  <p className="attention-desc">5 employees late today</p>
-                </div>
-                <button className="btn btn-secondary btn-sm">Details</button>
-              </div>
-            </div>
-          </div>
-
-          {/* Recent Activity */}
-          <div className="card activity-card mt-6">
-            <div className="activity-header">
-              <h3>Recent Activity</h3>
-            </div>
-            <div className="activity-timeline">
-              <div className="timeline-item">
-                <div className="timeline-dot success"></div>
-                <div className="timeline-content">
-                  <p className="timeline-text"><strong>Sarah Chen</strong> checked in</p>
-                  <span className="timeline-time">9:01 AM</span>
-                </div>
-              </div>
-              <div className="timeline-item">
-                <div className="timeline-dot success"></div>
-                <div className="timeline-content">
-                  <p className="timeline-text"><strong>Marcus J.</strong> checked in</p>
-                  <span className="timeline-time">8:58 AM</span>
-                </div>
-              </div>
-              <div className="timeline-item">
-                <div className="timeline-dot info"></div>
-                <div className="timeline-content">
-                  <p className="timeline-text"><strong>Elena R.</strong> approved leave for <strong>Chloe M.</strong></p>
-                  <span className="timeline-time">Yesterday</span>
-                </div>
-              </div>
-            </div>
-          </div>
+              <p className="ledger-text"><strong>5 employees</strong> checked in after 09:00 AM.</p>
+              <button className="btn-link">See Details</button>
+            </li>
+          </ul>
         </div>
-      </div>
+      </section>
+
+      {/* Integrated Visualization Section */}
+      <section className="dashboard-visualization">
+        <div className="viz-header">
+          <h3>Attendance Rhythm</h3>
+          <span className="text-muted font-mono text-sm">Current Week</span>
+        </div>
+        
+        <div className="viz-container">
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={attendanceData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
+              <XAxis 
+                dataKey="name" 
+                axisLine={{ stroke: 'var(--border-strong)' }} 
+                tickLine={false} 
+                tick={{ fill: 'var(--text-secondary)', fontSize: 12, fontFamily: 'var(--font-mono)' }} 
+                dy={10} 
+              />
+              <YAxis 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fill: 'var(--text-muted)', fontSize: 12, fontFamily: 'var(--font-mono)' }} 
+              />
+              <Tooltip 
+                cursor={{fill: 'var(--bg-subtle)'}}
+                contentStyle={{ 
+                  borderRadius: '0px', 
+                  border: '1px solid var(--border-heavy)', 
+                  boxShadow: '4px 4px 0px rgba(0,0,0,1)',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '12px'
+                }}
+              />
+              <Bar dataKey="present" name="Present" fill="var(--text-primary)" radius={[0, 0, 0, 0]} barSize={48} />
+              <Bar dataKey="absent" name="Absent" fill="var(--text-muted)" radius={[0, 0, 0, 0]} barSize={48} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </section>
+      
     </div>
   );
 }

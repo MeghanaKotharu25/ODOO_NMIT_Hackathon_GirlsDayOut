@@ -1,142 +1,190 @@
 .attendance-page {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-6);
+  gap: var(--spacing-12);
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
-.today-section {
+/* Operational Control Center */
+.attendance-control-center {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-8);
-  background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-subtle) 100%);
-  border-left: 4px solid var(--accent);
+  background-color: var(--bg-surface);
+  border: 2px solid var(--border-heavy);
+  padding: var(--spacing-8) var(--spacing-10);
+  box-shadow: 6px 6px 0px rgba(0,0,0,1);
 }
 
-@media (max-width: 640px) {
-  .today-section {
+@media (max-width: 768px) {
+  .attendance-control-center {
     flex-direction: column;
-    text-align: center;
-    gap: var(--spacing-6);
+    align-items: flex-start;
+    gap: var(--spacing-8);
+    padding: var(--spacing-6);
   }
 }
 
-.today-info h2 {
-  margin: 0 0 var(--spacing-1) 0;
-  font-size: 1.5rem;
+.control-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
 }
 
-.current-date {
-  color: var(--text-secondary);
-  font-size: 1rem;
-  margin-bottom: var(--spacing-4);
-}
-
-.time-display {
-  font-family: monospace;
-  font-size: 3.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
+.page-title {
+  font-family: var(--font-serif);
+  font-size: 2rem;
   line-height: 1;
-  letter-spacing: -0.05em;
 }
 
-.check-btn {
-  padding: var(--spacing-4) var(--spacing-8);
-  font-size: 1.125rem;
-  border-radius: var(--radius-full);
+/* The Terminal */
+.status-terminal {
   display: flex;
   align-items: center;
-  gap: var(--spacing-3);
-  box-shadow: var(--shadow-md);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: var(--spacing-6);
+  padding: var(--spacing-4) var(--spacing-6);
+  border: 1px solid var(--border-strong);
+  transition: all 0.4s var(--ease-snappy);
 }
 
-.check-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+.status-terminal.idle {
+  background-color: var(--bg-main);
 }
 
-.check-btn:active {
-  transform: translateY(0);
+.status-terminal.active {
+  background-color: var(--status-success-bg);
+  border-color: var(--status-success);
 }
 
-.check-in-btn {
-  background-color: var(--status-success);
+.terminal-display {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  min-width: 120px;
+}
+
+.terminal-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+}
+
+.status-terminal.active .terminal-label {
+  color: var(--status-success);
+}
+
+.terminal-time {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.status-terminal.active .terminal-time {
+  color: var(--status-success);
+}
+
+/* Action Button */
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3) var(--spacing-5);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  border: 2px solid transparent;
+  transition: all 0.3s var(--ease-snappy);
+}
+
+.btn-action.start {
+  background-color: var(--text-primary);
   color: white;
+  border-color: var(--text-primary);
 }
 
-.check-in-btn:hover {
-  background-color: #059669; /* slightly darker green */
+.btn-action.start:hover {
+  background-color: var(--text-secondary);
+  border-color: var(--text-secondary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 0px rgba(0,0,0,1);
 }
 
-.check-out-btn {
+.btn-action.start:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.btn-action.stop {
+  background-color: transparent;
+  color: var(--status-error);
+  border-color: var(--status-error);
+}
+
+.btn-action.stop:hover {
   background-color: var(--status-error);
   color: white;
 }
 
-.check-out-btn:hover {
-  background-color: #DC2626; /* slightly darker red */
-}
-
-/* Admin Log Section */
-.attendance-log-section {
-  padding: var(--spacing-6);
-}
-
-.log-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--spacing-6);
-}
-
-@media (max-width: 768px) {
-  .log-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--spacing-4);
-  }
-  
-  .log-actions {
-    flex-wrap: wrap;
-  }
-}
-
-.log-header h3 {
-  margin: 0;
-}
-
-.log-actions {
-  display: flex;
-  gap: var(--spacing-3);
-  align-items: center;
-}
-
-.date-picker {
-  padding: var(--spacing-1) var(--spacing-2);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  background-color: var(--bg-surface);
-  color: var(--text-primary);
-  font-family: inherit;
-  font-size: 0.875rem;
-}
-
-.emp-cell {
+/* Section Divider */
+.section-divider {
   display: flex;
   align-items: center;
-  gap: var(--spacing-3);
+  gap: var(--spacing-4);
+  margin-top: var(--spacing-4);
+}
+
+.divider-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.divider-line {
+  height: 2px;
+  width: 100%;
+  background-color: var(--border-heavy);
+}
+
+/* Data Table Overrides for Attendance */
+.attendance-history .data-table th {
+  font-family: var(--font-mono);
+}
+
+.status-text {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
   font-weight: 500;
+  font-size: 0.85rem;
 }
 
-.emp-avatar-xs {
-  width: 24px;
-  height: 24px;
-  border-radius: var(--radius-full);
-  object-fit: cover;
+.status-text.working { color: var(--status-success); }
+.status-text.late { color: var(--status-warning); }
+.status-text.completed { color: var(--text-secondary); }
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--status-success);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
 }
 
-.font-mono {
-  font-family: monospace;
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(30, 70, 32, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(30, 70, 32, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(30, 70, 32, 0); }
+}
+
+.row-active {
+  background-color: var(--status-success-bg) !important;
+}
+
+.text-right {
+  text-align: right;
 }

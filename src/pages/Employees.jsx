@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Plus } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { mockEmployees } from '../data/mockData';
 import './Employees.css';
 
@@ -10,9 +10,9 @@ export function Employees() {
   
   const getStatusDisplay = (status) => {
     switch(status) {
-      case 'Present': return <span className="status-indicator present"><span className="dot"></span> Present</span>;
-      case 'Absent': return <span className="status-indicator absent"><span className="dot"></span> Absent</span>;
-      case 'On Leave': return <span className="status-indicator leave">✈ On Leave</span>;
+      case 'Present': return <span className="status-dot present"></span>;
+      case 'Absent': return <span className="status-dot absent"></span>;
+      case 'On Leave': return <span className="status-dot leave"></span>;
       default: return null;
     }
   };
@@ -24,66 +24,63 @@ export function Employees() {
   );
 
   return (
-    <div className="employees-page">
-      <header className="page-header">
-        <div className="header-content">
-          <div>
-            <h1 className="page-title">Employees</h1>
-            <p className="text-muted">{mockEmployees.length} active team members</p>
-          </div>
-          <button className="btn btn-primary">
-            <Plus size={16} /> New Employee
-          </button>
+    <div className="roster-page">
+      <header className="roster-header">
+        <div className="roster-title-section">
+          <h1 className="page-title">Personnel Roster</h1>
+          <p className="roster-meta font-mono">
+            {mockEmployees.length} Records &mdash; Sorted by Department
+          </p>
         </div>
         
-        <div className="filters-bar">
-          <div className="search-container expanded">
-            <Search className="search-icon" size={18} />
+        <div className="roster-controls">
+          <div className="search-bar">
+            <Search className="search-icon" size={16} />
             <input 
               type="text" 
-              placeholder="Search by name or department..." 
-              className="search-input"
+              placeholder="Query name or department..." 
+              className="search-input font-mono"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button className="btn btn-secondary filter-btn">
-            <Filter size={16} /> Department
-          </button>
-          <button className="btn btn-secondary filter-btn">
-            <Filter size={16} /> Status
+          <button className="btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            + Add Record
           </button>
         </div>
       </header>
 
-      <div className="employee-grid">
+      <div className="roster-grid">
         {filteredEmployees.map(emp => (
           <div 
             key={emp.id} 
-            className="card employee-card"
+            className="roster-card"
             onClick={() => navigate(`/employees/${emp.id}`)}
           >
-            <div className="card-header">
-              {getStatusDisplay(emp.status)}
+            <div className="roster-image-container">
+              <img src={emp.avatarUrl} alt={emp.firstName} className="roster-avatar" />
+              <div className="roster-status-overlay">
+                {getStatusDisplay(emp.status)}
+              </div>
             </div>
             
-            <div className="card-body">
-              <img src={emp.avatarUrl} alt={emp.firstName} className="employee-avatar" />
-              <h3 className="employee-name">{emp.firstName} {emp.lastName}</h3>
-              <p className="employee-position">{emp.position}</p>
+            <div className="roster-details">
+              <div className="roster-identity">
+                <span className="roster-id font-mono">{emp.id}</span>
+                <h3 className="roster-name">{emp.firstName} {emp.lastName}</h3>
+              </div>
               
-              <div className="employee-meta">
-                <span className="badge">{emp.department}</span>
-                <span className="employee-id">{emp.id}</span>
+              <div className="roster-role">
+                <p className="role-title">{emp.position}</p>
+                <p className="role-dept font-mono">{emp.department}</p>
               </div>
             </div>
           </div>
         ))}
         {filteredEmployees.length === 0 && (
-          <div className="empty-state">
-            <div className="empty-icon-placeholder"><Search size={32} className="text-muted" /></div>
-            <h3>No employees found</h3>
-            <p className="text-muted">Try adjusting your search or filters.</p>
+          <div className="roster-empty">
+            <Search size={24} className="text-muted" />
+            <p className="font-mono text-muted">No records match the query.</p>
           </div>
         )}
       </div>

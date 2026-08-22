@@ -1,130 +1,152 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, MapPin, Briefcase, Calendar, Building, Hash } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, MapPin, Briefcase, Calendar as CalendarIcon, Shield, FileText } from 'lucide-react';
 import { mockEmployees } from '../data/mockData';
+import { useAuth } from '../context/AuthContext';
 import './EmployeeDetails.css';
 
 export function EmployeeDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('general');
+
   const employee = mockEmployees.find(emp => emp.id === id);
 
   if (!employee) {
     return (
-      <div className="empty-state">
-        <h3>Employee not found</h3>
-        <button className="btn btn-primary" onClick={() => navigate('/employees')}>
-          Return to Directory
-        </button>
+      <div className="dossier-page">
+        <div className="dossier-empty">Record Not Found</div>
       </div>
     );
   }
 
-  const getStatusBadge = (status) => {
-    switch(status) {
-      case 'Present': return <span className="badge badge-success">Present</span>;
-      case 'Absent': return <span className="badge badge-error">Absent</span>;
-      case 'On Leave': return <span className="badge badge-info">On Leave</span>;
-      default: return null;
-    }
-  };
+  const isAuthorizedForPrivate = user?.role === 'ADMIN' || user?.role === 'HR' || user?.id === employee.id;
 
   return (
-    <div className="employee-details-page">
-      <div className="back-nav">
-        <button className="btn-text" onClick={() => navigate('/employees')}>
-          <ArrowLeft size={16} /> Back to Directory
-        </button>
+    <div className="dossier-page">
+      <button className="btn-back" onClick={() => navigate('/employees')}>
+        <ArrowLeft size={16} /> Return to Roster
+      </button>
+
+      <div className="dossier-header-block">
+        <div className="dossier-identity">
+          <div className="dossier-image-wrapper">
+            <img src={employee.avatarUrl} alt={employee.firstName} className="dossier-avatar" />
+            <div className={`dossier-status-badge ${employee.status.toLowerCase().replace(' ', '-')}`}>
+              {employee.status}
+            </div>
+          </div>
+          <div className="dossier-titles">
+            <h1 className="dossier-name">{employee.firstName} {employee.lastName}</h1>
+            <p className="dossier-role">{employee.position}</p>
+            <div className="dossier-meta">
+              <span className="font-mono text-muted">{employee.id}</span>
+              <span className="dossier-divider">/</span>
+              <span className="font-mono">{employee.department}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="personnel-record">
-        <header className="record-header">
-          <div className="record-avatar-container">
-            <img src={employee.avatarUrl} alt={employee.firstName} className="record-avatar" />
-            <div className="record-status-overlay">
-              {getStatusBadge(employee.status)}
-            </div>
-          </div>
+      <div className="dossier-navigation">
+        <div className="dossier-tabs">
+          <button 
+            className={`dossier-tab ${activeTab === 'general' ? 'active' : ''}`}
+            onClick={() => setActiveTab('general')}
+          >
+            General Information
+          </button>
           
-          <div className="record-title">
-            <h1 className="record-name">{employee.firstName} {employee.lastName}</h1>
-            <p className="record-position">{employee.position}</p>
+          {isAuthorizedForPrivate && (
+            <>
+              <button 
+                className={`dossier-tab ${activeTab === 'security' ? 'active' : ''}`}
+                onClick={() => setActiveTab('security')}
+              >
+                Security & Access
+              </button>
+              <button 
+                className={`dossier-tab ${activeTab === 'documents' ? 'active' : ''}`}
+                onClick={() => setActiveTab('documents')}
+              >
+                Confidential Documents
+              </button>
+            </>
+          )}
+          <div className="dossier-tab-line" data-active={activeTab}></div>
+        </div>
+      </div>
+
+      <div className="dossier-content">
+        {activeTab === 'general' && (
+          <div className="dossier-section">
+            <h2 className="section-title">Contact & Organization</h2>
             
-            <div className="record-meta-tags">
-              <span className="meta-tag"><Building size={14} /> {employee.department}</span>
-              <span className="meta-tag"><Hash size={14} /> {employee.id}</span>
+            <div className="data-grid">
+              <div className="data-field">
+                <span className="field-label"><Mail size={14} /> Email Address</span>
+                <span className="field-value font-mono">{employee.email}</span>
+              </div>
+              <div className="data-field">
+                <span className="field-label"><Phone size={14} /> Mobile Phone</span>
+                <span className="field-value font-mono">{employee.phone}</span>
+              </div>
+              <div className="data-field">
+                <span className="field-label"><MapPin size={14} /> Location</span>
+                <span className="field-value">{employee.location}</span>
+              </div>
+              <div className="data-field">
+                <span className="field-label"><CalendarIcon size={14} /> Date of Joining</span>
+                <span className="field-value font-mono">{employee.joinDate}</span>
+              </div>
+              <div className="data-field">
+                <span className="field-label"><Briefcase size={14} /> Manager</span>
+                <span className="field-value">{employee.manager}</span>
+              </div>
             </div>
           </div>
-        </header>
+        )}
 
-        <div className="record-body">
-          <section className="record-section">
-            <h2 className="section-title">Professional Information</h2>
-            <div className="info-grid">
-              <div className="info-item">
-                <span className="info-label">Department</span>
-                <span className="info-value">{employee.department}</span>
+        {activeTab === 'security' && isAuthorizedForPrivate && (
+          <div className="dossier-section">
+            <h2 className="section-title">Security Settings</h2>
+            <div className="data-grid">
+              <div className="data-field">
+                <span className="field-label"><Shield size={14} /> System Role</span>
+                <span className="field-value font-mono uppercase">{employee.role}</span>
               </div>
-              <div className="info-item">
-                <span className="info-label">Position</span>
-                <span className="info-value">{employee.position}</span>
-              </div>
-              <div className="info-item">
-                <span className="info-label">Joining Date</span>
-                <span className="info-value">{new Date(employee.joinDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-              </div>
-              <div className="info-item">
-                <span className="info-label">Employment Type</span>
-                <span className="info-value">Full-time</span>
+              <div className="data-field">
+                <span className="field-label">Last Login</span>
+                <span className="field-value font-mono">2024-10-24 08:42:15</span>
               </div>
             </div>
-          </section>
+          </div>
+        )}
 
-          <hr className="divider" />
-
-          <section className="record-section">
-            <h2 className="section-title">Contact Information</h2>
-            <div className="info-grid">
-              <div className="info-item">
-                <span className="info-label">Email</span>
-                <span className="info-value flex-align">
-                  <Mail size={16} className="text-muted mr-2" /> 
-                  <a href={`mailto:${employee.email}`}>{employee.email}</a>
-                </span>
+        {activeTab === 'documents' && isAuthorizedForPrivate && (
+          <div className="dossier-section">
+            <h2 className="section-title">Stored Documents</h2>
+            <div className="document-list">
+              <div className="document-item">
+                <div className="doc-icon"><FileText size={20} /></div>
+                <div className="doc-info">
+                  <span className="doc-name font-mono">Resume_Updated_2023.pdf</span>
+                  <span className="doc-meta">Added 2023-01-15 • 2.4 MB</span>
+                </div>
+                <button className="btn-link">Download</button>
               </div>
-              <div className="info-item">
-                <span className="info-label">Phone</span>
-                <span className="info-value flex-align">
-                  <Phone size={16} className="text-muted mr-2" /> 
-                  +1 (555) 123-4567
-                </span>
-              </div>
-              <div className="info-item">
-                <span className="info-label">Location</span>
-                <span className="info-value flex-align">
-                  <MapPin size={16} className="text-muted mr-2" /> 
-                  San Francisco, CA
-                </span>
+              <div className="document-item">
+                <div className="doc-icon"><FileText size={20} /></div>
+                <div className="doc-info">
+                  <span className="doc-name font-mono">Contract_Signed.pdf</span>
+                  <span className="doc-meta">Added {employee.joinDate} • 1.1 MB</span>
+                </div>
+                <button className="btn-link">Download</button>
               </div>
             </div>
-          </section>
-
-          <hr className="divider" />
-
-          <section className="record-section">
-            <h2 className="section-title">Current Status</h2>
-            <div className="info-grid">
-              <div className="info-item">
-                <span className="info-label">Availability</span>
-                <span className="info-value">{getStatusBadge(employee.status)}</span>
-              </div>
-              <div className="info-item">
-                <span className="info-label">Recent Activity</span>
-                <span className="info-value">Checked in at 9:00 AM</span>
-              </div>
-            </div>
-          </section>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

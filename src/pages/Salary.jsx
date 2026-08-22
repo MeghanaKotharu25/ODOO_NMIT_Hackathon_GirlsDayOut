@@ -1,134 +1,166 @@
 import { useState } from 'react';
-import { Download, ChevronDown } from 'lucide-react';
+import { Download, FileText, ChevronDown } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { mockEmployees } from '../data/mockData';
 import './Salary.css';
 
 export function Salary() {
-  const [selectedEmployee, setSelectedEmployee] = useState('Elena Rodriguez');
+  const { user } = useAuth();
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState(mockEmployees[0].id);
+  
+  // In a real app, this would be fetched based on the selected employee or current user
+  const employee = user?.role === 'EMPLOYEE' 
+    ? mockEmployees.find(emp => emp.id === user.id)
+    : mockEmployees.find(emp => emp.id === selectedEmployeeId);
 
-  const salaryData = {
-    monthly: 8500,
-    annual: 102000,
-    structure: [
-      { name: 'Basic', percentage: 50, amount: 4250, color: 'var(--accent)' },
-      { name: 'HRA', percentage: 20, amount: 1700, color: '#38bdf8' },
-      { name: 'Special Allowance', percentage: 15, amount: 1275, color: '#a78bfa' },
-      { name: 'LTA', percentage: 10, amount: 850, color: '#fbbf24' },
-      { name: 'Other', percentage: 5, amount: 425, color: '#94a3b8' }
-    ],
-    deductions: [
-      { name: 'Provident Fund (PF)', amount: 510 },
-      { name: 'Professional Tax', amount: 200 }
-    ]
+  // Mock salary structure based on the employee's role/department
+  const getSalaryStructure = (emp) => {
+    const base = emp.department === 'Engineering' ? 85000 : 65000;
+    const hra = base * 0.4; // 40% of base
+    const allowances = base * 0.2; // 20% of base
+    
+    const gross = base + hra + allowances;
+    
+    const tax = gross * 0.15; // 15% estimated tax
+    const pf = base * 0.12; // 12% of base
+    
+    const deductions = tax + pf;
+    const net = gross - deductions;
+    
+    return {
+      base, hra, allowances, gross, tax, pf, deductions, net
+    };
   };
 
-  const totalDeductions = salaryData.deductions.reduce((acc, curr) => acc + curr.amount, 0);
-  const netSalary = salaryData.monthly - totalDeductions;
+  const salary = getSalaryStructure(employee);
+  const formatCurrency = (amount) => `$${amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
   return (
-    <div className="salary-page">
-      <header className="page-header">
-        <div className="header-content">
-          <div>
-            <h1 className="page-title">Salary Management</h1>
-            <p className="text-muted">Admin access only</p>
-          </div>
-          
+    <div className="financial-page">
+      <header className="financial-header">
+        <h1 className="page-title">Financial Ledger</h1>
+        
+        {user?.role !== 'EMPLOYEE' && (
           <div className="employee-selector">
-            <span className="text-muted mr-2">Viewing:</span>
-            <button className="btn btn-secondary">
-              {selectedEmployee} <ChevronDown size={14} className="ml-2" />
-            </button>
+            <span className="selector-label">Viewing Record For:</span>
+            <div className="selector-dropdown">
+              <select 
+                value={selectedEmployeeId} 
+                onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                className="font-mono"
+              >
+                {mockEmployees.map(emp => (
+                  <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName} ({emp.id})</option>
+                ))}
+              </select>
+              <ChevronDown size={14} className="selector-icon" />
+            </div>
           </div>
-        </div>
+        )}
       </header>
 
-      <div className="salary-content">
-        <div className="salary-main">
-          {/* Primary Wage Display */}
-          <div className="card wage-card">
-            <div className="wage-header">
-              <h2>Current Compensation</h2>
-              <button className="btn btn-secondary btn-sm"><Download size={14} /> Payslip</button>
+      {/* Main Calculation Grid */}
+      <div className="calculation-ledger">
+        
+        {/* Earnings Column */}
+        <div className="ledger-column">
+          <div className="column-header">
+            <h3>Gross Earnings</h3>
+          </div>
+          <div className="ledger-entries">
+            <div className="ledger-entry">
+              <span className="entry-label">Base Compensation</span>
+              <span className="entry-value font-mono">{formatCurrency(salary.base)}</span>
             </div>
-            
-            <div className="wage-numbers">
-              <div className="primary-wage">
-                <span className="wage-label">Monthly Gross</span>
-                <span className="wage-amount">${salaryData.monthly.toLocaleString()}</span>
-              </div>
-              <div className="wage-divider"></div>
-              <div className="secondary-wage">
-                <span className="wage-label">Annual CTC</span>
-                <span className="wage-amount">${salaryData.annual.toLocaleString()}</span>
-              </div>
+            <div className="ledger-entry">
+              <span className="entry-label">Housing Allowance (HRA)</span>
+              <span className="entry-value font-mono">{formatCurrency(salary.hra)}</span>
+            </div>
+            <div className="ledger-entry">
+              <span className="entry-label">Special Allowances</span>
+              <span className="entry-value font-mono">{formatCurrency(salary.allowances)}</span>
             </div>
           </div>
-
-          {/* Salary Structure Visual Breakdown */}
-          <div className="card structure-card">
-            <h3 className="section-title">Salary Structure</h3>
-            
-            <div className="visual-bar-container">
-              {salaryData.structure.map((item, index) => (
-                <div 
-                  key={index} 
-                  className="visual-bar-segment" 
-                  style={{ width: `${item.percentage}%`, backgroundColor: item.color }}
-                  title={`${item.name} (${item.percentage}%)`}
-                ></div>
-              ))}
-            </div>
-
-            <div className="structure-list">
-              {salaryData.structure.map((item, index) => (
-                <div key={index} className="structure-item">
-                  <div className="structure-item-left">
-                    <span className="color-dot" style={{ backgroundColor: item.color }}></span>
-                    <span className="structure-name">{item.name}</span>
-                    <span className="structure-percent">{item.percentage}%</span>
-                  </div>
-                  <div className="structure-amount">${item.amount.toLocaleString()}</div>
-                </div>
-              ))}
-            </div>
+          <div className="ledger-subtotal">
+            <span className="subtotal-label">Total Earnings</span>
+            <span className="subtotal-value font-mono">{formatCurrency(salary.gross)}</span>
           </div>
         </div>
 
-        <div className="salary-sidebar">
-          {/* Deductions & Net */}
-          <div className="card deductions-card">
-            <h3 className="section-title">Deductions</h3>
-            
-            <div className="deductions-list">
-              {salaryData.deductions.map((item, index) => (
-                <div key={index} className="deduction-item">
-                  <span className="deduction-name">{item.name}</span>
-                  <span className="deduction-amount">-${item.amount}</span>
-                </div>
-              ))}
+        {/* Deductions Column */}
+        <div className="ledger-column">
+          <div className="column-header">
+            <h3>Deductions</h3>
+          </div>
+          <div className="ledger-entries">
+            <div className="ledger-entry">
+              <span className="entry-label">Income Tax (Est.)</span>
+              <span className="entry-value font-mono text-error">-{formatCurrency(salary.tax)}</span>
             </div>
-            
-            <div className="deductions-total">
-              <span>Total Deductions</span>
-              <span>-${totalDeductions}</span>
+            <div className="ledger-entry">
+              <span className="entry-label">Provident Fund (PF)</span>
+              <span className="entry-value font-mono text-error">-{formatCurrency(salary.pf)}</span>
             </div>
+          </div>
+          <div className="ledger-subtotal">
+            <span className="subtotal-label">Total Deductions</span>
+            <span className="subtotal-value font-mono text-error">-{formatCurrency(salary.deductions)}</span>
+          </div>
+        </div>
 
-            <div className="net-salary-box">
-              <span className="net-label">Net Monthly Salary</span>
-              <span className="net-amount">${netSalary.toLocaleString()}</span>
-            </div>
-          </div>
-          
-          <div className="card info-card mt-6">
-            <h3 className="section-title">Recent Revisions</h3>
-            <div className="revision-item">
-              <div className="revision-date">Jan 1, 2024</div>
-              <div className="revision-change">+$10,000 Annual (10.8% increase)</div>
-              <div className="revision-reason text-muted">Annual Performance Review</div>
-            </div>
-          </div>
+      </div>
+
+      {/* Net Salary Result */}
+      <div className="net-salary-block">
+        <div className="net-details">
+          <span className="net-label">Net Payable Amount</span>
+          <span className="net-value font-mono">{formatCurrency(salary.net)}</span>
+        </div>
+        <div className="net-structure-bar">
+          <div className="bar-segment earnings" style={{ width: `${(salary.net / salary.gross) * 100}%` }}></div>
+          <div className="bar-segment deductions" style={{ width: `${(salary.deductions / salary.gross) * 100}%` }}></div>
+        </div>
+        <div className="net-legend font-mono">
+          <span><span className="legend-dot earnings"></span> Net Pay</span>
+          <span><span className="legend-dot deductions"></span> Deductions</span>
         </div>
       </div>
+
+      {/* Payslips */}
+      <div className="payslip-archive">
+        <div className="archive-header">
+          <h3>Payslip Archive</h3>
+        </div>
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Period</th>
+              <th className="text-right">Net Pay</th>
+              <th>Status</th>
+              <th className="text-right">Document</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="font-mono">September 2024</td>
+              <td className="font-mono text-right">{formatCurrency(salary.net)}</td>
+              <td><span className="badge badge-success">Processed</span></td>
+              <td className="text-right">
+                <button className="btn-link"><Download size={14} className="inline-icon" /> PDF</button>
+              </td>
+            </tr>
+            <tr>
+              <td className="font-mono">August 2024</td>
+              <td className="font-mono text-right">{formatCurrency(salary.net)}</td>
+              <td><span className="badge badge-success">Processed</span></td>
+              <td className="text-right">
+                <button className="btn-link"><Download size={14} className="inline-icon" /> PDF</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
     </div>
   );
 }
