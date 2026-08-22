@@ -16,8 +16,9 @@ export function AuthProvider({ children }) {
     }
     try {
       const fullUser = await authService.getCurrentUser();
-      setUser(fullUser);
-    } catch {
+      setUser(fullUser || currentSession.user);
+    } catch (err) {
+      console.warn('Profile fetch warning (fallback to session user):', err);
       setUser(currentSession.user);
     }
   };
@@ -34,7 +35,8 @@ export function AuthProvider({ children }) {
           await fetchUserWithProfile(initialSession);
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        console.warn('Session initialization warning:', err);
         if (mounted) {
           setSession(null);
           setUser(null);
@@ -46,23 +48,35 @@ export function AuthProvider({ children }) {
         }
       });
 
-    // Subscribe to auth state changes
-    const subscription = authService.onAuthStateChange(async (event, newSession) => {
-      if (!mounted) return;
-      setSession(newSession);
-      if (newSession) {
-        await fetchUserWithProfile(newSession);
-      } else {
-        setUser(null);
+    // Subscribe to auth state changes safely
+    let subscription = null;
+    try {
+      subscription = authService.onAuthStateChange(async (event, newSession) => {
+        if (!mounted) return;
+        setSession(newSession);
+        if (newSession) {
+          await fetchUserWithProfile(newSession);
+        } else {
+          setUser(null);
+        }
+        setLoading(false);
+      });
+    } catch (err) {
+      console.warn('Auth state subscription warning:', err);
+      if (mounted) {
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    }
 
     // Clean up subscription on unmount
     return () => {
       mounted = false;
       if (subscription && typeof subscription.unsubscribe === 'function') {
-        subscription.unsubscribe();
+        try {
+          subscription.unsubscribe();
+        } catch {
+          // Ignore unsubscribe errors
+        }
       }
     };
   }, []);
@@ -76,9 +90,14 @@ export function AuthProvider({ children }) {
   };
 
   const signOut = async () => {
-    await authService.signOut();
-    setSession(null);
-    setUser(null);
+    try {
+      await authService.signOut();
+    } catch (err) {
+      console.warn('Sign out error:', err);
+    } finally {
+      setSession(null);
+      setUser(null);
+    }
   };
 
   const value = {

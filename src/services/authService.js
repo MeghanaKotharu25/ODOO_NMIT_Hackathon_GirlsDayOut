@@ -29,28 +29,38 @@ export const authService = {
 
   // Get active session
   getCurrentSession: async () => {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error) throw error;
-    return session;
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      return session;
+    } catch (err) {
+      console.warn('getCurrentSession warning:', err);
+      return null;
+    }
   },
 
   // Get current authenticated user details along with profile role
   getCurrentUser: async () => {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error || !user) return null;
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) return null;
 
-    // Retrieve user profile from public.profiles
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id, employee_code, first_name, last_name, email, role, department, position, status')
-      .eq('id', user.id)
-      .maybeSingle();
+      // Retrieve user profile from public.profiles
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, employee_code, first_name, last_name, email, role, department, position, status')
+        .eq('id', user.id)
+        .maybeSingle();
 
-    return {
-      ...user,
-      profile: profile || null,
-      role: profile?.role || 'employee',
-    };
+      return {
+        ...user,
+        profile: profile || null,
+        role: profile?.role || 'employee',
+      };
+    } catch (err) {
+      console.warn('getCurrentUser warning:', err);
+      return null;
+    }
   },
 
   // Subscribe to auth state changes
