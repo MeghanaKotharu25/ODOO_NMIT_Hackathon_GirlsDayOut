@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, MapPin, Briefcase, Calendar as CalendarIcon, Shield, FileText, Loader2 } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, MapPin, Briefcase, Calendar as CalendarIcon, Shield, FileText, Loader2, Clock } from 'lucide-react';
 import { employeeService } from '../services/employeeService';
 import { profileService } from '../services/profileService';
 import { useToast } from '../context/ToastContext';
@@ -122,6 +122,14 @@ export function EmployeeDetails() {
               <div className="data-field">
                 <span className="field-label"><CalendarIcon size={14} /> Date of Joining</span>
                 <span className="field-value font-mono">{employee.joinDate}</span>
+              </div>
+              <div className="data-field">
+                <span className="field-label"><Clock size={14} /> Shift Start</span>
+                <span className="field-value font-mono">{employee.defaultInTime ? employee.defaultInTime.substring(0, 5) : '09:00'}</span>
+              </div>
+              <div className="data-field">
+                <span className="field-label"><Clock size={14} /> Shift End</span>
+                <span className="field-value font-mono">{employee.defaultOutTime ? employee.defaultOutTime.substring(0, 5) : '17:30'}</span>
               </div>
               <div className="data-field">
                 <span className="field-label"><Briefcase size={14} /> Manager</span>

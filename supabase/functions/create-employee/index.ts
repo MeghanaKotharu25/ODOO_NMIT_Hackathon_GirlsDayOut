@@ -23,7 +23,7 @@ serve(async (req) => {
     )
 
     // 2. Parse request body
-    const { email, firstName, lastName, position, department, companyName, serialNumber } = await req.json()
+    const { email, firstName, lastName, position, department, companyName, serialNumber, defaultInTime, defaultOutTime } = await req.json()
 
     if (!email || !firstName) {
       return new Response(
@@ -74,6 +74,8 @@ serve(async (req) => {
         employee_code: employeeCode,
         position,
         department,
+        default_in_time: defaultInTime ? `${defaultInTime}:00` : '09:00:00',
+        default_out_time: defaultOutTime ? `${defaultOutTime}:00` : '17:30:00',
       })
       .eq('id', authData.user.id)
 

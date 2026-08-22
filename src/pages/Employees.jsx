@@ -45,7 +45,7 @@ export function Employees() {
 
   // Form state for new employee
   const [newEmployee, setNewEmployee] = useState({
-    firstName: '', lastName: '', position: '', department: ''
+    firstName: '', lastName: '', position: '', department: '', inTime: '09:00', outTime: '17:30'
   });
 
   const getStatusDisplay = (status) => {
@@ -113,7 +113,9 @@ export function Employees() {
           position: newEmployee.position,
           department: newEmployee.department,
           companyName: companyName,
-          serialNumber: serial
+          serialNumber: serial,
+          defaultInTime: newEmployee.inTime,
+          defaultOutTime: newEmployee.outTime
         }
       });
 
@@ -123,7 +125,7 @@ export function Employees() {
       // Re-fetch to guarantee sync with DB
       fetchEmployees();
       setIsDrawerOpen(false);
-      setNewEmployee({ firstName: '', lastName: '', position: '', department: '' });
+      setNewEmployee({ firstName: '', lastName: '', position: '', department: '', inTime: '09:00', outTime: '17:30' });
       addToast(`Record Created! System Password: ${data?.generatedPassword || autoPassword}`, 'success');
 
     } catch (err) {
@@ -255,6 +257,28 @@ export function Employees() {
               <option value="Marketing">Marketing</option>
               <option value="HR">HR</option>
             </select>
+          </div>
+
+          <div className="grid-cols-2">
+            <div className="form-group">
+              <label className="form-label font-mono uppercase text-xs">Shift Start Time</label>
+              <input 
+                type="time" 
+                className="form-input font-mono" 
+                value={newEmployee.inTime}
+                onChange={(e) => setNewEmployee({...newEmployee, inTime: e.target.value})}
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label font-mono uppercase text-xs">Shift End Time</label>
+              <input 
+                type="time" 
+                className="form-input font-mono" 
+                value={newEmployee.outTime}
+                onChange={(e) => setNewEmployee({...newEmployee, outTime: e.target.value})}
+              />
+            </div>
           </div>
           
           <div className="drawer-footer mt-auto pt-6 border-t border-[var(--border-strong)]">
