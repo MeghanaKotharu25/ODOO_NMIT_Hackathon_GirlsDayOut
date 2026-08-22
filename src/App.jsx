@@ -20,8 +20,8 @@ const Help = () => <div className="p-8">Help Center (Placeholder)</div>;
 
 function App() {
   return (
-    <AuthProvider>
-      <ToastProvider>
+    <ToastProvider>
+      <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/loading" element={<LoadingScreen />} />
@@ -42,8 +42,8 @@ function App() {
             <Route path="help" element={<Help />} />
           </Route>
         </Routes>
-      </ToastProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </ToastProvider>
   );
 }
 
