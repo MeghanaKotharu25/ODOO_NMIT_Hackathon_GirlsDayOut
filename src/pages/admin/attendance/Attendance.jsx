@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react';
-import { AlertCircle, CalendarDays, Save } from 'lucide-react';
+import { AlertCircle, CalendarDays } from 'lucide-react';
 import { attendanceService } from '../../../services/attendanceService';
 import './Attendance.css';
 
-const statuses = ['present', 'absent', 'half_day', 'leave'];
-
-const toInputTime = (value) => value ? new Date(value).toTimeString().slice(0, 5) : '';
 
 const formatTime = (value) => value
   ? new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -14,9 +11,7 @@ const formatTime = (value) => value
 export default function Attendance() {
   const [selectedDate, setSelectedDate] = useState(attendanceService.getLocalDate());
   const [records, setRecords] = useState([]);
-  const [drafts, setDrafts] = useState({});
   const [loading, setLoading] = useState(false);
-  const [savingId, setSavingId] = useState(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -28,38 +23,13 @@ export default function Attendance() {
     setError('');
     try {
       const rows = await attendanceService.getAdminAttendance(selectedDate);
-
       setRecords(rows);
-      setDrafts(Object.fromEntries(rows.map((row) => [row.profile.id, {
-        status: row.status,
-        checkIn: toInputTime(row.checkIn),
-        checkOut: toInputTime(row.checkOut),
-      }])));
     } catch (loadError) {
       console.error('Unable to load admin attendance:', loadError);
       setError(loadError.message || 'Unable to load attendance records.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const updateDraft = (employeeId, field, value) => {
-    setDrafts((current) => ({
-      ...current,
-      [employeeId]: { ...current[employeeId], [field]: value },
-    }));
-  };
-
-  const saveRecord = async (row) => {
-    const draft = drafts[row.profile.id];
-    setSavingId(row.profile.id);
-    setError('');
-
-    const result = await attendanceService.saveAdminRecord(row, selectedDate, draft);
-
-    if (result.error) setError(result.error.message);
-    else await loadAttendance();
-    setSavingId(null);
   };
 
   return (
@@ -71,7 +41,6 @@ export default function Attendance() {
           <p className="text-muted">Review and correct the daily attendance register.</p>
         </div>
         <label className="admin-date-picker">
-          <CalendarDays size={18} />
           <span className="font-mono">Review date</span>
           <input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
         </label>
@@ -85,7 +54,6 @@ export default function Attendance() {
             <h2>{selectedDate}</h2>
             <p className="text-muted">{records.length} employees in the register</p>
           </div>
-          <CalendarDays size={20} aria-hidden="true" />
         </div>
         <div className="data-table-wrapper">
           <table className="data-table">
@@ -97,7 +65,6 @@ export default function Attendance() {
                 <th>Work Hours</th>
                 <th>Extra Hours</th>
                 <th>Status</th>
-                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -141,27 +108,14 @@ export default function Attendance() {
                       {extraHours > 0 ? `+${Math.floor(extraHours)}h ${Math.round((extraHours % 1) * 60).toString().padStart(2, '0')}m` : '--'}
                     </td>
                     <td>
-                      <select
-                        className={`admin-status-select ${drafts[row.profile.id]?.status}`}
-                        value={drafts[row.profile.id]?.status || row.status}
-                        onChange={(event) => updateDraft(row.profile.id, 'status', event.target.value)}
-                      >
-                        {statuses.map((status) => <option key={status} value={status}>{status.replace('_', '-')}</option>)}
-                      </select>
-                    </td>
-                    <td>
-                      <div className="admin-edit-actions">
-                        <input aria-label={`Check-in time for ${row.profile.first_name}`} type="time" value={drafts[row.profile.id]?.checkIn || ''} onChange={(event) => updateDraft(row.profile.id, 'checkIn', event.target.value)} />
-                        <input aria-label={`Check-out time for ${row.profile.first_name}`} type="time" value={drafts[row.profile.id]?.checkOut || ''} onChange={(event) => updateDraft(row.profile.id, 'checkOut', event.target.value)} />
-                        <button className="btn btn-primary" type="button" onClick={() => saveRecord(row)} disabled={savingId === row.profile.id}>
-                          <Save size={15} /> {savingId === row.profile.id ? 'Saving' : 'Save'}
-                        </button>
-                      </div>
+                      <span className={`status-badge ${row.status.replace('_', '').toLowerCase()}`}>
+                        {row.status.replace('_', '-')}
+                      </span>
                     </td>
                   </tr>
                 );
               }) : (
-                <tr><td colSpan="7" className="attendance-empty">No employees found.</td></tr>
+                <tr><td colSpan="6" className="attendance-empty">No employees found.</td></tr>
               )}
             </tbody>
           </table>

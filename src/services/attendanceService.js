@@ -177,13 +177,16 @@ export const attendanceService = {
     if (profilesError) throw profilesError;
     if (attendanceError) throw attendanceError;
 
+    const today = attendanceService.getLocalDate();
+    const isFuture = date > today;
+
     const attendanceByEmployee = new Map((attendance || []).map((record) => [record.employee_id, record]));
     return (profiles || []).map((profile) => {
       const record = attendanceByEmployee.get(profile.id);
       return {
         profile,
         record,
-        status: record?.status || 'absent',
+        status: record?.status || (isFuture ? 'scheduled' : 'absent'),
         checkIn: record?.check_in || '',
         checkOut: record?.check_out || '',
         workHours: record?.work_hours || 0,
@@ -252,7 +255,7 @@ export const attendanceService = {
   // Check out for an employee
   checkOut: async (employeeUuid, checkInIsoTime) => {
     if (!isSupabaseConfigured) throw new Error('Supabase not configured');
-    const today = new Date().toISOString().split('T')[0];
+    const today = attendanceService.getLocalDate();
     const now = new Date();
     const checkOutIso = now.toISOString();
 
@@ -264,13 +267,13 @@ export const attendanceService = {
 
     const { data, error } = await supabase
       .from('attendance')
-      .upsert({
-        employee_id: employeeUuid,
-        date: today,
+      .update({
         check_out: checkOutIso,
         work_hours: workHours,
         status: 'present'
-      }, { onConflict: 'employee_id,date' })
+      })
+      .eq('employee_id', employeeUuid)
+      .eq('date', today)
       .select()
       .single();
 
